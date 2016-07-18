@@ -15,13 +15,13 @@ class Scheduler(metaclass=ABCMeta):
             if len(apps) > 0:
                 rate = self.__usage_to_rate(usage)
                 for rest, out in LeaveOneOut(len(apps)):
-                    self._estimation.update_app(apps[out][0], apps[rest], rate)
+                    self._estimation.update_job(apps[out][0], apps[rest], rate)
 
     def __usage_to_rate(self, usage):
         return usage.sum()
 
     def best_app_index(self, scheduled_apps, apps):
-        return self._estimation.best_app_index(scheduled_apps, apps)
+        return self._estimation.argsort_jobs(scheduled_apps, apps)
 
     def add(self, app: Application):
         self._queue.append(app)

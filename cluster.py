@@ -3,11 +3,11 @@ from complementarity import Job
 
 
 class Application(Job):
-    def __init__(self, name, cmd_line, n_containers):
+    def __init__(self, name, cmd_line, n_tasks):
         super().__init__(name)
         self.cmd_line = cmd_line
         self.id = None
-        self.tasks = [Task(self) for i in range(n_containers)]
+        self.tasks = [Task(self) for i in range(n_tasks)]
 
 
 class Task:
@@ -24,7 +24,7 @@ class Node:
         self.tasks = []
 
     def add_task(self, task: Task):
-        if self.available_containers() < 1:
+        if self.available_containers < 1:
             raise ValueError("Not enough containers to schedule a task")
         self.tasks.append(task)
 
@@ -38,8 +38,9 @@ class Node:
         for task in self.tasks:
             apps[task.application.name] = task.application
 
-        return apps.values()
+        return list(apps.values())
 
+    @property
     def available_containers(self):
         return self.n_containers - len(self.tasks)
 
