@@ -2,6 +2,7 @@ from complementarity import ComplementarityEstimation
 from cluster import Cluster, Application
 from abc import ABCMeta, abstractmethod
 from sklearn.cross_validation import LeaveOneOut
+from repeated_timer import RepeatedTimer
 
 
 class Scheduler(metaclass=ABCMeta):
@@ -9,13 +10,17 @@ class Scheduler(metaclass=ABCMeta):
         self._queue = []
         self._estimation = estimation
         self._cluster = cluster
+        self.timer = RepeatedTimer(60, self.update_estimation)
 
-    def _update_estimation(self):
+    def update_estimation(self):
         for (apps, usage) in self._cluster.apps_usage():
             if len(apps) > 0:
                 rate = self.__usage_to_rate(usage)
                 for rest, out in LeaveOneOut(len(apps)):
                     self._estimation.update_job(apps[out][0], apps[rest], rate)
+
+    def stop_updating_estimation(self):
+        self.timer.cancel()
 
     def __usage_to_rate(self, usage):
         return usage.sum()
@@ -27,7 +32,7 @@ class Scheduler(metaclass=ABCMeta):
         self._queue.append(app)
 
     @abstractmethod
-    def schedule(self, jobs):
+    def schedule(self):
         pass
 
 

@@ -53,7 +53,7 @@ class EpsilonGreedyEstimation(ComplementarityEstimation):
         self.update_count = np.ones(self.shape)
 
     def update_job(self, job, concurrent_jobs, rate):
-        ix = np.ix_(self.indices(job),self.indices(concurrent_jobs))
+        ix = np.ix_(self.indices(job), self.indices(concurrent_jobs))
 
         self.update_count[ix] += 1
         self.average[ix] += (rate - self.average[ix]) / self.update_count[ix]
@@ -111,11 +111,13 @@ class GradientEstimation(ComplementarityEstimation):
         ap_concurrent = self.__action_probabilities(job, concurrent_jobs)
         ap_other = self.__action_probabilities(job, other_jobs)
 
+        constant = self.alpha * (rate - self.average[job])
+
         ix = np.ix_(job, concurrent_jobs)
-        self.preferences[ix] += self.alpha * (rate - self.average[job]) * (1 - ap_concurrent)
+        self.preferences[ix] += constant * (1 - ap_concurrent)
 
         ix = np.ix_(job, other_jobs)
-        self.preferences[ix] -= self.alpha * (rate - self.average[job]) * ap_other
+        self.preferences[ix] -= constant * ap_other
 
     def __action_probabilities(self, jobs_index, concurrent_jobs_index):
         exp = np.exp(self.preferences[jobs_index])
