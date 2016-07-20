@@ -3,31 +3,36 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 
 
+class Server:
+    def __init__(self, name):
+        self.name = name
+
+
 class StatCollector(metaclass=ABCMeta):
-    # numpy array of shape (len(nodes), len(resources)) is expected
+    # numpy array of shape (len(servers), len(resources)) is expected
     @abstractmethod
-    def mean_usage(self, nodes, time_interval=60):
+    def mean_usage(self, servers, time_interval=60):
         pass
 
-    # list of list of shape (len(nodes), len(pids)) is expected
+    # list of list of shape (len(servers), len(pids)) is expected
     @abstractmethod
-    def running_processes_pid(self, nodes, time_interval=60):
+    def running_processes_pid(self, servers, time_interval=60):
         pass
 
     @abstractmethod
-    def get_pid(self, pattern, node):
+    def get_pid(self, pattern, server):
         pass
 
 
 class DummyStatCollector(StatCollector):
-    def mean_usage(self, nodes, time_interval=60):
-        return np.ones((len(nodes), 3))
+    def mean_usage(self, servers, time_interval=60):
+        return np.ones((len(servers), 3))
 
-    def running_processes_pid(self, nodes, time_interval=60):
-        return [[i, i ** 2] for i, n in enumerate(nodes)]
+    def running_processes_pid(self, servers, time_interval=60):
+        return [[i, i ** 2] for i, n in enumerate(servers)]
 
-    def get_pid(self, pattern, node):
-        return node.name + pattern
+    def get_pid(self, pattern, server):
+        return server.name + pattern
 
 
 class InfluxDBClient(StatCollector):
@@ -40,18 +45,18 @@ class InfluxDBClient(StatCollector):
             database=db
         )
 
-    def mean_usage(self, nodes, time_interval=60):
-        mem = self._mean_query("used_percent", "mem", time_interval, nodes)
-        cpu = self._mean_query("usage_nice", "cpu", time_interval, nodes)
+    def mean_usage(self, servers, time_interval=60):
+        mem = self._mean_query("used_percent", "mem", time_interval, servers)
+        cpu = self._mean_query("usage_nice", "cpu", time_interval, servers)
 
-        results = np.zeros((len(nodes), 2))
-        for i, node in enumerate(nodes):
-            results[i, 0] = next(mem.get_points(tags={'host': node})).get('mean')
-            results[i, 1] = next(cpu.get_points(tags={'host': node})).get('mean')
+        results = np.zeros((len(servers), 2))
+        for i, server in enumerate(servers):
+            results[i, 0] = next(mem.get_points(tags={'host': server.name})).get('mean')
+            results[i, 1] = next(cpu.get_points(tags={'host': server.name})).get('mean')
 
         return results
 
-    def _mean_query(self, field, measurement, time_in_sec, nodes):
+    def _mean_query(self, field, measurement, time_in_sec, servers):
         query_template = """
             SELECT mean({field})
             FROM {measurement}
@@ -63,13 +68,13 @@ class InfluxDBClient(StatCollector):
             field=field,
             measurement=measurement,
             time_in_sec=int(time_in_sec),
-            hosts="|".join(nodes)
+            hosts="|".join([s.name for s in servers])
         ))
 
-    def container_pid_running(self, nodes):
+    def container_pid_running(self, servers):
         pass
 
-    def _pid_query(self, field, measurement, time_in_sec, nodes):
+    def _pid_query(self, field, measurement, time_in_sec, servers):
         query_template = """
             SELECT pid
             FROM procstat
@@ -81,5 +86,5 @@ class InfluxDBClient(StatCollector):
             field=field,
             measurement=measurement,
             time_in_sec=int(time_in_sec),
-            hosts="|".join(nodes)
+            hosts="|".join([s.name for s in servers])
         ))

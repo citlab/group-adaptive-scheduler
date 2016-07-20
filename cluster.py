@@ -1,4 +1,4 @@
-from stat_collector import StatCollector
+from stat_collector import StatCollector, Server
 from complementarity import Job
 
 
@@ -17,9 +17,9 @@ class Task:
         self.container = None
 
 
-class Node:
+class Node(Server):
     def __init__(self, name, n_containers):
-        self.name = name
+        super().__init__(name)
         self.n_containers = n_containers
         self.tasks = []
 
