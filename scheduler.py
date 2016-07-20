@@ -15,14 +15,15 @@ class Scheduler(metaclass=ABCMeta):
     def update_estimation(self):
         for (apps, usage) in self._cluster.apps_usage():
             if len(apps) > 0:
-                rate = self.__usage_to_rate(usage)
+                rate = self.usage2rate(usage)
                 for rest, out in LeaveOneOut(len(apps)):
                     self._estimation.update_job(apps[out][0], apps[rest], rate)
 
     def stop_updating_estimation(self):
         self.timer.cancel()
 
-    def __usage_to_rate(self, usage):
+    @staticmethod
+    def usage2rate(usage):
         return usage.sum()
 
     def best_app_index(self, scheduled_apps, apps):
@@ -42,7 +43,7 @@ class QueueModificationScheduler(Scheduler):
         self.running_jobs = running_jobs
         self.jobs_to_peek = jobs_to_peek
 
-    def schedule(self, jobs):
+    def schedule(self):
         n = len(jobs)
         scheduled_jobs = [jobs.pop(0)]
 
