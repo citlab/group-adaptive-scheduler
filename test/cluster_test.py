@@ -1,4 +1,5 @@
 from cluster import *
+from stat_collector import DummyStatCollector
 import pytest
 
 
@@ -62,5 +63,79 @@ class TestNode:
 
         with pytest.raises(ValueError):
             node.pid_to_application("45") == apps[0]
+
+
+class TestCluster:
+    @staticmethod
+    def gen_cluster():
+        stat_collector = DummyStatCollector(
+            [
+                ["A0T0", "A0T1", "A0T2"],
+                ["A0T3", "A1T0"],
+                ["A1T1"],
+                ["A1T2", "A1T3", "A0T4", "A0T5"],
+            ],
+            lambda process_pattern, server: process_pattern
+        )
+        cluster = Cluster("Node{}", 4, 4, stat_collector)
+        apps = [
+            Application("app0", "cmd", 8),
+            Application("app1", "cmd", 8)
+        ]
+
+        for i, app in enumerate(apps):
+            for j, task in enumerate(app.tasks):
+                task.container = "A{}T{}".format(i, j)
+
+        cluster.nodes[0].add_task(apps[0].tasks[0])
+        cluster.nodes[0].add_task(apps[0].tasks[1])
+        cluster.nodes[0].add_task(apps[0].tasks[2])
+
+        cluster.nodes[1].add_task(apps[0].tasks[3])
+        cluster.nodes[1].add_task(apps[1].tasks[0])
+
+        cluster.nodes[2].add_task(apps[1].tasks[1])
+
+        cluster.nodes[3].add_task(apps[1].tasks[2])
+        cluster.nodes[3].add_task(apps[1].tasks[3])
+        cluster.nodes[3].add_task(apps[0].tasks[4])
+        cluster.nodes[3].add_task(apps[0].tasks[5])
+
+        return cluster, stat_collector, apps
+
+    def test_apps_usage(self):
+        cluster, stat_collector, apps = self.gen_cluster()
+
+        nodes_apps = [[], [], [], []]
+        nodes_apps[0].append(apps[0])
+        nodes_apps[0].append(apps[0])
+        nodes_apps[0].append(apps[0])
+
+        nodes_apps[1].append(apps[0])
+        nodes_apps[1].append(apps[1])
+
+        nodes_apps[2].append(apps[1])
+
+        nodes_apps[3].append(apps[1])
+        nodes_apps[3].append(apps[1])
+        nodes_apps[3].append(apps[0])
+        nodes_apps[3].append(apps[0])
+
+        mean_usage = stat_collector.mean_usage(cluster.nodes)
+
+        expected_result = []
+        for i in range(4):
+            expected_result.append(
+                (nodes_apps[i], mean_usage[i].tolist())
+            )
+
+        print(expected_result)
+
+        result = []
+        for r in cluster.apps_usage():
+            result.append((r[0], r[1].tolist()))
+
+        assert expected_result == result
+
 
 

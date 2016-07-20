@@ -53,12 +53,11 @@ class Node(Server):
 
 class Cluster:
     def __init__(self, node_name_pattern, n_nodes, n_containers, stat_collector: StatCollector):
-        self.node_names = [node_name_pattern.format(i) for i in range(n_nodes)]
-        self.nodes = [Node(name, n_containers) for name in self.node_names]
+        self.nodes = [Node(node_name_pattern.format(i), n_containers) for i in range(n_nodes)]
         self.stat_collector = stat_collector
 
     def apps_usage(self):
-        mean_usage = self.stat_collector.mean_usage(self.node_names)
+        mean_usage = self.stat_collector.mean_usage(self.nodes)
         nodes_applications = self.__running_apps()
         
         apps_usage = []
@@ -71,7 +70,7 @@ class Cluster:
 
     def __running_apps(self):
         self.__update_task_pid()
-        running_pids = self.stat_collector.running_processes_pid(self.node_names)
+        running_pids = self.stat_collector.running_processes_pid(self.nodes)
         nodes_applications = []
         
         for i, node in enumerate(self.nodes):
@@ -89,7 +88,7 @@ class Cluster:
         for node in self.nodes:
             for task in node.tasks:
                 if task.pid is None:
-                    task.pid = self.stat_collector.get_pid(task.container, node.name)
+                    task.pid = self.stat_collector.get_pid(task.container, node)
 
 
 
