@@ -20,19 +20,23 @@ class StatCollector(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_pid(self, pattern, server):
+    def get_pid(self, process_pattern, server):
         pass
 
 
 class DummyStatCollector(StatCollector):
+    def __init__(self, running_pids, pid_generator):
+        self.running_pids = running_pids
+        self.pid_generator = pid_generator
+
     def mean_usage(self, servers, time_interval=60):
         return np.ones((len(servers), 3))
 
     def running_processes_pid(self, servers, time_interval=60):
-        return [[i, i ** 2] for i, n in enumerate(servers)]
+        return self.running_pids
 
-    def get_pid(self, pattern, server):
-        return server.name + pattern
+    def get_pid(self, process_pattern, server):
+        return self.pid_generator(process_pattern, server)
 
 
 class InfluxDBClient(StatCollector):
