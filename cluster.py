@@ -1,25 +1,10 @@
 from stat_collector import StatCollector, Server
-from complementarity import Job
-
-
-class Application(Job):
-    def __init__(self, name, cmd_line, n_tasks):
-        super().__init__(name)
-        self.cmd_line = cmd_line
-        self.id = None
-        self.tasks = [Task(self) for i in range(n_tasks)]
-
-
-class Task:
-    def __init__(self, application: Application):
-        self.application = application
-        self.pid = None
-        self.container = None
+from resource_manager import ResourceManager, Application, Task
 
 
 class Node(Server):
-    def __init__(self, name, n_containers):
-        super().__init__(name)
+    def __init__(self, address: str, n_containers: int):
+        super().__init__(address)
         self.n_containers = n_containers
         self.tasks = []
 
@@ -27,9 +12,16 @@ class Node(Server):
         if self.available_containers < 1:
             raise ValueError("Not enough containers to schedule a task")
         self.tasks.append(task)
+        task.node = self
 
     def remove_application(self, app: Application):
-        self.tasks = [task for task in self.tasks if task.application != app]
+        staying_tasks = []
+        for task in self.tasks:
+            if task.application != app:
+                staying_tasks.append(task)
+            else:
+                task.node = None
+        self.tasks = staying_tasks
 
     @property
     def applications(self):
@@ -42,23 +34,23 @@ class Node(Server):
 
     @property
     def available_containers(self):
+        if not isinstance(self.n_containers, int):
+            print("stop")
         return self.n_containers - len(self.tasks)
-
-    def pid_to_application(self, pid):
-        for task in self.tasks:
-            if task.pid is not None and task.pid == pid:
-                return task.application
-        raise ValueError("No application found")
 
 
 class Cluster:
-    def __init__(self, node_name_pattern, n_nodes, n_containers, stat_collector: StatCollector):
-        self.nodes = [Node(node_name_pattern.format(i), n_containers) for i in range(n_nodes)]
+    def __init__(self, resource_manager: ResourceManager, stat_collector: StatCollector):
+        self.resource_manager = resource_manager
         self.stat_collector = stat_collector
+        self.nodes = []
+
+        for address, n_containers in self.resource_manager.nodes():
+            self.nodes.append(Node(address, n_containers))
 
     def apps_usage(self):
         mean_usage = self.stat_collector.mean_usage(self.nodes)
-        nodes_applications = self.__running_apps()
+        nodes_applications = self._running_apps()
         
         apps_usage = []
         for i in range(len(self.nodes)):
@@ -68,27 +60,17 @@ class Cluster:
         
         return apps_usage
 
-    def __running_apps(self):
-        self.__update_task_pid()
-        running_pids = self.stat_collector.running_processes_pid(self.nodes)
+    def _running_apps(self):
         nodes_applications = []
-        
-        for i, node in enumerate(self.nodes):
-            applications = []
-            for pid in running_pids[i]:
-                try:
-                    applications.append(node.pid_to_application(pid))
-                except ValueError:
-                    pass
-            nodes_applications.append(applications)
+
+        for node in self.nodes:
+            apps = {}
+            for task in node.tasks:
+                if task.application.is_running:
+                    apps[task.application.id] = task.application
+            nodes_applications.append(list(apps.values()))
             
         return nodes_applications
-
-    def __update_task_pid(self):
-        for node in self.nodes:
-            for task in node.tasks:
-                if task.pid is None:
-                    task.pid = self.stat_collector.get_pid(task.container, node)
 
 
 

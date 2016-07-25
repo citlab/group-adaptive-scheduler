@@ -1,42 +1,24 @@
 from influxdb import InfluxDBClient as BaseInfluxDBClient
 from abc import ABCMeta, abstractmethod
 import numpy as np
+import typing
 
 
 class Server:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, address):
+        self.address = address
 
 
 class StatCollector(metaclass=ABCMeta):
     # numpy array of shape (len(servers), len(resources)) is expected
     @abstractmethod
-    def mean_usage(self, servers, time_interval=60):
-        pass
-
-    # list of list of shape (len(servers), len(pids)) is expected
-    @abstractmethod
-    def running_processes_pid(self, servers, time_interval=60):
-        pass
-
-    @abstractmethod
-    def get_pid(self, process_pattern, server):
+    def mean_usage(self, servers: typing.List[Server], time_interval: int = 60) -> np.ndarray:
         pass
 
 
 class DummyStatCollector(StatCollector):
-    def __init__(self, running_pids, pid_generator):
-        self.running_pids = running_pids
-        self.pid_generator = pid_generator
-
     def mean_usage(self, servers, time_interval=60):
         return np.ones((len(servers), 3))
-
-    def running_processes_pid(self, servers, time_interval=60):
-        return self.running_pids
-
-    def get_pid(self, process_pattern, server):
-        return self.pid_generator(process_pattern, server)
 
 
 class InfluxDBClient(StatCollector):
@@ -55,8 +37,8 @@ class InfluxDBClient(StatCollector):
 
         results = np.zeros((len(servers), 2))
         for i, server in enumerate(servers):
-            results[i, 0] = next(mem.get_points(tags={'host': server.name})).get('mean')
-            results[i, 1] = next(cpu.get_points(tags={'host': server.name})).get('mean')
+            results[i, 0] = next(mem.get_points(tags={'host': server.address})).get('mean')
+            results[i, 1] = next(cpu.get_points(tags={'host': server.address})).get('mean')
 
         return results
 
@@ -72,23 +54,5 @@ class InfluxDBClient(StatCollector):
             field=field,
             measurement=measurement,
             time_in_sec=int(time_in_sec),
-            hosts="|".join([s.name for s in servers])
-        ))
-
-    def container_pid_running(self, servers):
-        pass
-
-    def _pid_query(self, field, measurement, time_in_sec, servers):
-        query_template = """
-            SELECT pid
-            FROM procstat
-            WHERE time > now() - {time_in_sec}s
-            AND host =~ /^({hosts})$/
-            GROUP BY host
-        """
-        return self.client.query(query_template.format(
-            field=field,
-            measurement=measurement,
-            time_in_sec=int(time_in_sec),
-            hosts="|".join([s.name for s in servers])
+            hosts="|".join([s.address for s in servers])
         ))
