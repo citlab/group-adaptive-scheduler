@@ -1,10 +1,11 @@
 from complementarity import *
+from application import DummyApplication
 import numpy as np
 
 jobs = np.array([
-    Job(0),
-    Job(1),
-    Job(2),
+    DummyApplication(0),
+    DummyApplication(1),
+    DummyApplication(2),
 ])
 
 
@@ -12,7 +13,7 @@ class TestIncrementalEstimation:
     def test_update_job(self):
         estimation = EpsilonGreedyEstimation(jobs, initial_average=1)
 
-        estimation.update_job(jobs[0], jobs[[1, 2]], 5)
+        estimation.update_app(jobs[0], jobs[[1, 2]], 5)
         expected_data = np.array([
             [1, 3, 3],
             [1, 1, 1],
@@ -21,7 +22,7 @@ class TestIncrementalEstimation:
 
         assert expected_data.tolist() == estimation.average.tolist()
 
-        estimation.update_job(jobs[0], jobs[[1, 2]], 7)
+        estimation.update_app(jobs[0], jobs[[1, 2]], 7)
         expected_data = np.array([
             [1, 13/3, 13/3],
             [1, 1, 1],
@@ -81,6 +82,6 @@ class TestGradientEstimation:
         expected_preferences = estimation.preferences
         expected_preferences[0] += delta
 
-        estimation.update_job(jobs[0], jobs[[1]], 2.)
+        estimation.update_app(jobs[0], jobs[[1]], 2.)
 
         assert np.allclose(expected_preferences, estimation.preferences)

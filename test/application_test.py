@@ -7,13 +7,12 @@ import pytest
 
 class TestApplication:
     def test_tasks(self):
-        app = DummyApplication("app", 8)
+        app = DummyApplication(n_tasks=8)
 
         assert len(app.tasks) == 8
 
     def test_start(self):
-        app = DummyApplication("app", 8)
-        app.id = 789456
+        app = DummyApplication()
         for task in app.tasks:
             task.node = Node("N", 8)
         rm = DummyRM(apps_running={app.id: True})
@@ -29,11 +28,29 @@ class TestApplication:
         assert app.is_running
 
     def test_not_correctly_scheduled(self):
-        app = DummyApplication("app", 8)
+        app = DummyApplication()
         rm = DummyRM()
 
         with pytest.raises(NotCorrectlyScheduledError):
             app.start(rm)
+
+    def test_is_a_copy_of(self):
+        app = DummyApplication(app_id=123, is_running=False)
+        app1 = DummyApplication(app_id=456)
+        app2 = DummyApplication(is_running=True)
+        app3 = DummyApplication(name="app3")
+        app4 = DummyApplication(n_tasks=7)
+
+        assert app1.is_a_copy_of(app)
+        assert app2.is_a_copy_of(app)
+        assert not app3.is_a_copy_of(app)
+        assert not app4.is_a_copy_of(app)
+
+    def test_copy(self):
+        app = DummyApplication()
+        c_app = app.copy()
+
+        assert c_app.is_a_copy_of(app)
 
 
 class TestFlinkApplication:
@@ -70,4 +87,20 @@ class TestFlinkApplication:
         ]
 
         assert expected_cmd == app.command_line()
+
+    def test_is_a_copy_of(self):
+        app = FlinkApplication("app", 8, jar="jar", args=["arg1"])
+        app1 = FlinkApplication("app", 8, jar="jar", args=["arg1"])
+        app2 = FlinkApplication("app", 8, jar="jar2", args=["arg1"])
+        app3 = FlinkApplication("app", 8, jar="jar", args=["arg3"])
+
+        assert app1.is_a_copy_of(app)
+        assert not app2.is_a_copy_of(app)
+        assert not app3.is_a_copy_of(app)
+
+    def test_copy(self):
+        app = FlinkApplication("app", 8, jar="jar", args=["arg1"])
+        c_app = app.copy()
+
+        assert c_app.is_a_copy_of(app)
 

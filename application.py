@@ -2,7 +2,6 @@ import subprocess
 import time
 from typing import List
 from threading import Thread
-from complementarity import Job
 from resource_manager import ResourceManager
 
 
@@ -10,9 +9,9 @@ class NotCorrectlyScheduledError(Exception):
     pass
 
 
-class Application(Job):
+class Application:
     def __init__(self, name, n_tasks):
-        super().__init__(name)
+        self.name = name
         self.id = None
         self.is_running = False
         self.tasks = [Task(self) for i in range(n_tasks)]
@@ -46,6 +45,12 @@ class Application(Job):
         if callable(on_finish):
             on_finish(self)
 
+    def copy(self):
+        return Application(self.name, len(self.tasks))
+
+    def is_a_copy_of(self, application):
+        return application.name == self.name and len(self.tasks) == len(application.tasks)
+
 
 class Task:
     def __init__(self, application: Application):
@@ -56,6 +61,11 @@ class Task:
 
 
 class DummyApplication(Application):
+    def __init__(self, name="app", n_tasks=8, app_id="id", is_running=False):
+        super().__init__(name, n_tasks)
+        self.id = app_id
+        self.is_running = is_running
+
     def command_line(self):
         return ["sleep", "0.1"]
 
@@ -83,3 +93,10 @@ class FlinkApplication(Application):
             hosts.append(task.node.address)
 
         return hosts
+
+    def copy(self):
+        return FlinkApplication(self.name, len(self.tasks), self.jar, self.args)
+
+    def is_a_copy_of(self, application):
+        return super().is_a_copy_of(application) and self.jar == application.jar and self.args == application.args
+

@@ -1,5 +1,6 @@
 import pytest
 from cluster import *
+from application import DummyApplication
 from resource_manager import DummyRM
 from stat_collector import DummyStatCollector
 
@@ -7,7 +8,7 @@ from stat_collector import DummyStatCollector
 class TestNode:
     def test_add_task(self):
         node = Node("test", 4)
-        app1 = Application("app1", 8)
+        app1 = DummyApplication()
 
         assert len(node.tasks) == 0
 
@@ -17,7 +18,7 @@ class TestNode:
 
     def test_add_task_error(self):
         node, _ = self.gen_node(8)
-        app1 = Application("app2", 8)
+        app1 = DummyApplication()
 
         with pytest.raises(ValueError):
             node.add_task(app1.tasks[0])
@@ -26,19 +27,20 @@ class TestNode:
     def gen_node(task_count=4):
         node = Node("test", 8)
         apps = [
-            Application("app0", 8),
-            Application("app1", 8)
+            DummyApplication(app_id=1),
+            DummyApplication(app_id=2),
+            DummyApplication(app_id=2)
         ]
 
         for i in range(task_count):
-            node.add_task(apps[i % 2].tasks[i // 2])
+            node.add_task(apps[i % 3].tasks[i // 3])
 
         return node, apps
 
     def test_applications(self):
         node, apps = self.gen_node()
 
-        assert node.applications == apps or node.applications == apps[::-1]
+        assert len(node.applications) == 2
 
     def test_available_containers(self):
         node, _ = self.gen_node(6)
@@ -58,10 +60,10 @@ class TestCluster:
         cluster = Cluster(rm, stat_collector)
 
         apps = [
-            Application("app0", 8),
-            Application("app1", 8),
-            Application("app1", 8),
-            Application("app2", 8),
+            DummyApplication("app0"),
+            DummyApplication("app1"),
+            DummyApplication("app1"),
+            DummyApplication("app2"),
         ]
 
         for i, app in enumerate(apps):

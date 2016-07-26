@@ -1,11 +1,13 @@
 from abc import ABCMeta, abstractmethod
-
 from sklearn.cross_validation import LeaveOneOut
-
 from cluster import Cluster
 from application import Application
 from complementarity import ComplementarityEstimation
 from repeated_timer import RepeatedTimer
+
+
+class NoApplicationCanBeScheduled(BaseException):
+    pass
 
 
 class Scheduler(metaclass=ABCMeta):
@@ -20,7 +22,7 @@ class Scheduler(metaclass=ABCMeta):
             if len(apps) > 0:
                 rate = self.usage2rate(usage)
                 for rest, out in LeaveOneOut(len(apps)):
-                    self.estimation.update_job(apps[out][0], apps[rest], rate)
+                    self.estimation.update_app(apps[out][0], apps[rest], rate)
 
     @staticmethod
     def usage2rate(usage):
@@ -29,27 +31,35 @@ class Scheduler(metaclass=ABCMeta):
     def add(self, app: Application):
         self.queue.append(app)
 
+    def update_schedule(self):
+        while True:
+            try:
+                app = self.schedule_application()
+            except NoApplicationCanBeScheduled:
+                return
+            app.start(self.cluster.resource_manager, self._on_app_finished)
+
+    def _on_app_finished(self, app: Application):
+        print("Application {} has finished".format(app))
+        self.update_schedule()
+
     @abstractmethod
-    def schedule(self):
+    def schedule_application(self) -> Application:
         pass
 
 
-class QueueModificationScheduler(Scheduler):
-    def __init__(self, *args, running_jobs=2, jobs_to_peek=5):
-        super().__init__(*args)
-        self.running_jobs = running_jobs
-        self.jobs_to_peek = jobs_to_peek
+class RoundRobin(Scheduler):
+    def schedule_application(self):
+        tasks = self.queue[0].tasks
+        n = len(tasks)
+        if n > self.cluster.available_containers:
+            raise NoApplicationCanBeScheduled
 
-    def schedule(self):
-        n = len(jobs)
-        scheduled_jobs = [jobs.pop(0)]
+        i = 0
+        for node in self.cluster.nodes.values():
+            while node.available_containers > 0 and i < n:
+                node.add_task(tasks[i])
+                i += 1
 
-        while len(scheduled_jobs) < n:
-            index = self.estimation.best_job_index(
-                scheduled_jobs[-self.running_jobs:],
-                jobs[:self.jobs_to_peek]
-            )
-            scheduled_jobs.append(jobs.pop(index))
-
-        return scheduled_jobs
+        return self.queue.pop(0)
 

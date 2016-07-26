@@ -31,7 +31,7 @@ class Node(Server):
         apps = {}
 
         for task in self.tasks:
-            apps[task.application.name] = task.application
+            apps[task.application.id] = task.application
 
         return list(apps.values())
 
@@ -72,6 +72,10 @@ class Cluster:
             nodes_applications[address] = list(apps.values())
             
         return nodes_applications
+
+    @property
+    def available_containers(self):
+        return sum(n.availe_containers for n in self.nodes.values())
 
 
 
