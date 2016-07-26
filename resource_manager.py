@@ -1,12 +1,12 @@
-import typing
 from abc import ABCMeta, abstractmethod
 from yarn_api_client import ResourceManager as YarnResourceManager
+from typing import List, Tuple
 
 
 class ResourceManager(metaclass=ABCMeta):
     @abstractmethod
     # [(node_name, n_containers)]
-    def nodes(self) -> typing.List[typing.Tuple[str, int]]:
+    def nodes(self) -> List[Tuple[str, int]]:
         pass
 
     @abstractmethod

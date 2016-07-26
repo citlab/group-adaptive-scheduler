@@ -1,6 +1,6 @@
 import subprocess
 import time
-import typing
+from typing import List
 from threading import Thread
 from complementarity import Job
 from resource_manager import ResourceManager
@@ -31,7 +31,7 @@ class Application(Job):
         self.thread = Thread(target=self._run, args=[resource_manager, on_finish, sleep_during_loop])
         self.thread.start()
 
-    def command_line(self) -> typing.List[str]:
+    def command_line(self) -> List[str]:
         return [""]
 
     def _run(self, resource_manager: ResourceManager, on_finish, sleep_during_loop):

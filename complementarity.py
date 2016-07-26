@@ -1,6 +1,7 @@
 import numpy as np
 from abc import ABCMeta, abstractmethod
 import operator
+from typing import Dict, List
 
 
 class Job:
@@ -12,7 +13,7 @@ class Job:
 
 
 class ComplementarityEstimation(metaclass=ABCMeta):
-    def __init__(self, recurrent_jobs):
+    def __init__(self, recurrent_jobs: List[Job]):
         self.shape = (len(recurrent_jobs), len(recurrent_jobs))
         self.jobs = recurrent_jobs
         self.index = {}
@@ -22,24 +23,23 @@ class ComplementarityEstimation(metaclass=ABCMeta):
             self.reverse_index[i] = job.name
 
     @abstractmethod
-    def argsort_jobs(self, scheduled_jobs, jobs):
+    def best_job_index(self, scheduled_jobs: List[Job], jobs: List[Job]) -> int:
         pass
 
     @abstractmethod
-    # nodes_jobs: [(node_name, jobs)]
-    def sort_nodes(self, nodes_jobs, job_to_schedule):
+    def best_node_index(self, nodes_jobs: Dict[str, List[Job]], job_to_schedule: Job) -> str:
         pass
 
     @abstractmethod
-    def update_job(self, job, concurrent_jobs, rate):
+    def update_job(self, job: Job, concurrent_jobs: List[Job], rate: float):
         pass
 
-    def indices(self, jobs):
+    def indices(self, jobs: List[Job]) -> List[int]:
         if isinstance(jobs, Job):
             jobs = [jobs]
         return [self.index[j.name] for j in jobs]
 
-    def job_ids(self, indices):
+    def job_ids(self, indices: List[int]) -> List[Job]:
         if not isinstance(indices, list):
             indices = [indices]
         return [self.reverse_index[i] for i in indices]
@@ -58,21 +58,11 @@ class EpsilonGreedyEstimation(ComplementarityEstimation):
         self.update_count[ix] += 1
         self.average[ix] += (rate - self.average[ix]) / self.update_count[ix]
 
-    def argsort_jobs(self, scheduled_jobs, jobs):
+    def best_job_index(self, scheduled_jobs, jobs):
         rates = self.expected_rates(scheduled_jobs, jobs)
-        return self.__gen_list(np.argsort(rates).tolist())
+        ix = np.argsort(rates)
 
-    def __gen_list(self, sorted_list):
-        result = []
-        n = len(sorted_list)
-
-        for i in range(n):
-            if np.random.uniform() < self.epsilon:
-                result.append(sorted_list.pop(np.random.randint(0, n - 1)))
-            else:
-                result.append(sorted_list.pop())
-
-        return result
+        return self.__greedy(ix)
 
     def expected_rates(self, jobs, jobs_to_schedule):
         return self.average[np.ix_(
@@ -80,16 +70,22 @@ class EpsilonGreedyEstimation(ComplementarityEstimation):
             self.indices(jobs_to_schedule)
         )].sum(axis=0)
 
-    def sort_nodes(self, nodes_jobs, job_to_schedule):
-        sorted_nodes = sorted(
+    def __greedy(self, items):
+        if np.random.uniform() < self.epsilon:
+            return items[np.random.randint(0, len(items) - 1)]
+        return items[-1]
+
+    def best_node_index(self, nodes_jobs, job_to_schedule):
+        sorted_nodes_jobs = sorted(
             map(
                 lambda node_jobs: (nodes_jobs[0], self.expected_rates(node_jobs[1], job_to_schedule)[0]),
-                nodes_jobs
+                nodes_jobs.items()
             ),
             key=operator.itemgetter(1)
         )
+        sorted_nodes = list(map(operator.itemgetter(0), sorted_nodes_jobs))
 
-        return self.__gen_list(list(map(operator.itemgetter(0), sorted_nodes)))
+        return self.__greedy(sorted_nodes)
 
 
 class GradientEstimation(ComplementarityEstimation):
@@ -124,35 +120,28 @@ class GradientEstimation(ComplementarityEstimation):
 
         return exp[:, concurrent_jobs_index] / exp.sum()
 
-    def argsort_jobs(self, scheduled_jobs, jobs):
+    def best_job_index(self, scheduled_jobs, jobs):
         p = self.normalized_action_probabilities(scheduled_jobs, jobs)
-        return self.__gen_list(np.arange(len(jobs)), p=p)
+        return self.__choose(np.arange(len(jobs)), p=p)
 
     def normalized_action_probabilities(self, jobs, jobs_to_schedule):
         p = self.__action_probabilities(self.indices(jobs), self.indices(jobs_to_schedule)).sum(axis=0)
         return p / p.sum()
 
     @staticmethod
-    def __gen_list(objects, p):
-        n = p.shape[0]
-        indices = np.arange(n)
-        result = []
+    def __choose(items, p):
+        indices = np.arange(len(items))
+        return items[np.random.choice(indices, p=p)]
 
-        for i in range(n):
-            index = np.random.choice(indices, p=p)
-            result.append(objects[index][0])
-            p[index] = 0
-            p /= p.sum()
-
-        return result
-
-    def sort_nodes(self, nodes_jobs, job_to_schedule):
+    def best_node_index(self, nodes_jobs, job_to_schedule):
         n = len(nodes_jobs)
         p = np.zeros(n)
-        for i, (node_name, jobs) in enumerate(nodes_jobs):
+        nodes = []
+        for i, (node_name, jobs) in enumerate(nodes_jobs.items()):
             p[i] = self.normalized_action_probabilities(jobs, job_to_schedule)
+            nodes.append(node_name)
         p /= p.sum()
 
-        return self.__gen_list(nodes_jobs, p)
+        return self.__choose(nodes, p)
 
 

@@ -1,7 +1,7 @@
 from influxdb import InfluxDBClient as BaseInfluxDBClient
 from abc import ABCMeta, abstractmethod
 import numpy as np
-import typing
+from typing import Dict
 
 
 class Server:
@@ -10,15 +10,14 @@ class Server:
 
 
 class StatCollector(metaclass=ABCMeta):
-    # numpy array of shape (len(servers), len(resources)) is expected
     @abstractmethod
-    def mean_usage(self, servers: typing.List[Server], time_interval: int = 60) -> np.ndarray:
+    def mean_usage(self, servers: Dict[str, Server], time_interval: int = 60) -> Dict[str, np.ndarray]:
         pass
 
 
 class DummyStatCollector(StatCollector):
     def mean_usage(self, servers, time_interval=60):
-        return np.ones((len(servers), 3))
+        return {k: np.ones(3) for k, _ in servers.items()}
 
 
 class InfluxDBClient(StatCollector):
@@ -35,10 +34,12 @@ class InfluxDBClient(StatCollector):
         mem = self._mean_query("used_percent", "mem", time_interval, servers)
         cpu = self._mean_query("usage_nice", "cpu", time_interval, servers)
 
-        results = np.zeros((len(servers), 2))
-        for i, server in enumerate(servers):
-            results[i, 0] = next(mem.get_points(tags={'host': server.address})).get('mean')
-            results[i, 1] = next(cpu.get_points(tags={'host': server.address})).get('mean')
+        results = {}
+        for address, server in servers.items():
+            result = np.zeros(3)
+            result[0] = next(mem.get_points(tags={'host': server.address})).get('mean')
+            result[1] = next(cpu.get_points(tags={'host': server.address})).get('mean')
+            results[address] = result
 
         return results
 

@@ -1,5 +1,4 @@
 import pytest
-
 from cluster import *
 from resource_manager import DummyRM
 from stat_collector import DummyStatCollector
@@ -73,49 +72,52 @@ class TestCluster:
         apps[2].is_running = True
         apps[3].is_running = False
 
-        cluster.nodes[0].add_task(apps[0].tasks[0])
-        cluster.nodes[0].add_task(apps[0].tasks[1])
-        cluster.nodes[0].add_task(apps[3].tasks[0])
+        cluster.nodes["N0"].add_task(apps[0].tasks[0])
+        cluster.nodes["N0"].add_task(apps[0].tasks[1])
+        cluster.nodes["N0"].add_task(apps[3].tasks[0])
 
-        cluster.nodes[1].add_task(apps[0].tasks[2])
-        cluster.nodes[1].add_task(apps[1].tasks[0])
+        cluster.nodes["N1"].add_task(apps[0].tasks[2])
+        cluster.nodes["N1"].add_task(apps[1].tasks[0])
 
-        cluster.nodes[2].add_task(apps[1].tasks[1])
-        cluster.nodes[2].add_task(apps[2].tasks[0])
+        cluster.nodes["N2"].add_task(apps[1].tasks[1])
+        cluster.nodes["N2"].add_task(apps[2].tasks[0])
 
-        cluster.nodes[3].add_task(apps[1].tasks[2])
-        cluster.nodes[3].add_task(apps[1].tasks[3])
-        cluster.nodes[3].add_task(apps[0].tasks[3])
-        cluster.nodes[3].add_task(apps[0].tasks[4])
+        cluster.nodes["N3"].add_task(apps[1].tasks[2])
+        cluster.nodes["N3"].add_task(apps[1].tasks[3])
+        cluster.nodes["N3"].add_task(apps[0].tasks[3])
+        cluster.nodes["N3"].add_task(apps[0].tasks[4])
 
         return cluster, apps
+
+    def test_nodes_apps(self):
+        cluster, apps = self.gen_cluster()
+
+        expected_result = {
+            "N0": [apps[0]],
+            "N1": [apps[0], apps[1]],
+            "N2": [apps[1], apps[2]],
+            "N3": [apps[1], apps[0]],
+        }
+
+        result = cluster.nodes_apps()
+        for address, applications in expected_result.items():
+            assert set(result[address]) == set(applications)
 
     def test_apps_usage(self):
         cluster, apps = self.gen_cluster()
 
-        nodes_apps = [[], [], [], []]
-        nodes_apps[0].append(apps[0])
-
-        nodes_apps[1].append(apps[0])
-        nodes_apps[1].append(apps[1])
-
-        nodes_apps[2].append(apps[1])
-        nodes_apps[2].append(apps[2])
-
-        nodes_apps[3].append(apps[1])
-        nodes_apps[3].append(apps[0])
-
+        nodes_apps = cluster.nodes_apps()
         mean_usage = cluster.stat_collector.mean_usage(cluster.nodes)
 
         expected_result = []
-        for i in range(4):
+        for address in cluster.nodes.keys():
             expected_result.append(
-                (nodes_apps[i], mean_usage[i].tolist())
+                (nodes_apps[address], mean_usage[address].tolist())
             )
 
         for i, result in enumerate(cluster.apps_usage()):
-            assert expected_result[i][1] == result[1].tolist()
             assert set(expected_result[i][0]) == set(result[0])
+            assert expected_result[i][1] == result[1].tolist()
 
 
 

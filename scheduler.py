@@ -13,7 +13,7 @@ class Scheduler(metaclass=ABCMeta):
         self.queue = []
         self.estimation = estimation
         self.cluster = cluster
-        self.__timer = RepeatedTimer(update_interval, self.update_estimation)
+        self._timer = RepeatedTimer(update_interval, self.update_estimation)
 
     def update_estimation(self):
         for (apps, usage) in self.cluster.apps_usage():
@@ -25,12 +25,6 @@ class Scheduler(metaclass=ABCMeta):
     @staticmethod
     def usage2rate(usage):
         return usage.sum()
-
-    def stop_updating_estimation(self):
-        self.__timer.cancel()
-
-    def best_app_index(self, scheduled_apps, apps):
-        return self.estimation.argsort_jobs(scheduled_apps, apps)
 
     def add(self, app: Application):
         self.queue.append(app)
@@ -51,7 +45,7 @@ class QueueModificationScheduler(Scheduler):
         scheduled_jobs = [jobs.pop(0)]
 
         while len(scheduled_jobs) < n:
-            index = self.best_app_index(
+            index = self.estimation.best_job_index(
                 scheduled_jobs[-self.running_jobs:],
                 jobs[:self.jobs_to_peek]
             )

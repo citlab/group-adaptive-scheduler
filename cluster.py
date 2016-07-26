@@ -1,6 +1,8 @@
 from stat_collector import StatCollector, Server
 from resource_manager import ResourceManager
 from application import Application, Task
+from typing import List, Tuple
+import numpy as np
 
 
 class Node(Server):
@@ -35,8 +37,6 @@ class Node(Server):
 
     @property
     def available_containers(self):
-        if not isinstance(self.n_containers, int):
-            print("stop")
         return self.n_containers - len(self.tasks)
 
 
@@ -44,32 +44,32 @@ class Cluster:
     def __init__(self, resource_manager: ResourceManager, stat_collector: StatCollector):
         self.resource_manager = resource_manager
         self.stat_collector = stat_collector
-        self.nodes = []
+        self.nodes = {}
 
         for address, n_containers in self.resource_manager.nodes():
-            self.nodes.append(Node(address, n_containers))
+            self.nodes[address] = Node(address, n_containers)
 
-    def apps_usage(self):
+    def apps_usage(self) -> List[Tuple[List[Application], np.ndarray]]:
         mean_usage = self.stat_collector.mean_usage(self.nodes)
-        nodes_applications = self._running_apps()
+        nodes_applications = self.nodes_apps()
         
         apps_usage = []
-        for i in range(len(self.nodes)):
+        for address in self.nodes.keys():
             apps_usage.append(
-                (nodes_applications[i], mean_usage[i])
+                (nodes_applications[address], mean_usage[address])
             )
         
         return apps_usage
 
-    def _running_apps(self):
-        nodes_applications = []
+    def nodes_apps(self):
+        nodes_applications = {}
 
-        for node in self.nodes:
+        for address, node in self.nodes.items():
             apps = {}
             for task in node.tasks:
                 if task.application.is_running:
                     apps[task.application.id] = task.application
-            nodes_applications.append(list(apps.values()))
+            nodes_applications[address] = list(apps.values())
             
         return nodes_applications
 
