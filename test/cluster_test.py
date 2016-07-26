@@ -1,14 +1,8 @@
 import pytest
+
 from cluster import *
-from stat_collector import DummyStatCollector
 from resource_manager import DummyRM
-
-
-class TestApplication:
-    def test_tasks(self):
-        app = Application("app", 8)
-
-        assert len(app.tasks) == 8
+from stat_collector import DummyStatCollector
 
 
 class TestNode:
@@ -121,9 +115,7 @@ class TestCluster:
 
         for i, result in enumerate(cluster.apps_usage()):
             assert expected_result[i][1] == result[1].tolist()
-            assert len(expected_result[i][0]) == len(result[0])
-            for app in expected_result[i][0]:
-                assert result[0].index(app) >= 0
+            assert set(expected_result[i][0]) == set(result[0])
 
 
 

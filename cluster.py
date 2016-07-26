@@ -1,5 +1,6 @@
 from stat_collector import StatCollector, Server
-from resource_manager import ResourceManager, Application, Task
+from resource_manager import ResourceManager
+from application import Application, Task
 
 
 class Node(Server):

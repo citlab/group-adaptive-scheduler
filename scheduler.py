@@ -2,7 +2,8 @@ from abc import ABCMeta, abstractmethod
 
 from sklearn.cross_validation import LeaveOneOut
 
-from cluster import Cluster, Application
+from cluster import Cluster
+from application import Application
 from complementarity import ComplementarityEstimation
 from repeated_timer import RepeatedTimer
 

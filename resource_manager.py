@@ -1,10 +1,6 @@
-import subprocess
-import time
 import typing
 from abc import ABCMeta, abstractmethod
-from threading import Thread
 from yarn_api_client import ResourceManager as YarnResourceManager
-from complementarity import Job
 
 
 class ResourceManager(metaclass=ABCMeta):
@@ -67,72 +63,4 @@ class YarnRM(YarnResourceManager, ResourceManager):
     def is_application_running(self, application_id):
         return self.cluster_application(application_id).data['app']['state'] == "RUNNING"
 
-
-class Application(Job):
-    def __init__(self, name, n_tasks):
-        super().__init__(name)
-        self.id = None
-        self.is_running = False
-        self.tasks = [Task(self) for i in range(n_tasks)]
-        self.thread = None
-
-    def __str__(self):
-        return "{} : {}".format(self.name, self.id)
-
-    def start(self, resource_manager: ResourceManager, on_finish=None):
-        self.thread = Thread(target=self._run, args=[resource_manager, on_finish])
-        self.thread.start()
-
-    def command_line(self) -> typing.List[str]:
-        return [""]
-
-    def _run(self, resource_manager: ResourceManager, on_finish):
-        process = subprocess.Popen(self.command_line())
-
-        while process.poll() is None:
-            if not self.is_running and resource_manager.is_application_running(self.id):
-                self.is_running = True
-
-            time.sleep(2)
-
-        if callable(on_finish):
-            on_finish(self)
-
-
-class Task:
-    def __init__(self, application: Application):
-        self.application = application
-        self.container = None
-        self.node = None
-        self.pid = None
-
-
-class NotCorrectlyScheduledError(Exception):
-    pass
-
-
-class FlinkApplication(Application):
-    def __init__(self, name, n_task, jar, args):
-        super().__init__(name, n_task)
-        self.jar = jar
-        self.args = args
-
-    def command_line(self):
-        cmd = ["$FLINK_HOME/bin/flink", "run", "-m yarn-cluster", "-yn {}".format(len(self.tasks))]
-        cmd += ["-yq " + ",".join(self.hosts())]
-        cmd += [self.jar] + self.args
-        return cmd
-
-    def hosts(self):
-        hosts = []
-
-        try:
-            for task in self.tasks:
-                hosts.append(task.node.address)
-        except AttributeError:
-            raise NotCorrectlyScheduledError(
-                "A task of the application {} is not scheduled on a node".format(self.name)
-            )
-
-        return hosts
 
