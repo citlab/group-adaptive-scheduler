@@ -27,9 +27,9 @@ class TestNode:
     def gen_node(task_count=4):
         node = Node("test", 8)
         apps = [
-            DummyApplication(app_id=1),
-            DummyApplication(app_id=2),
-            DummyApplication(app_id=2)
+            DummyApplication(id=1),
+            DummyApplication(id=2),
+            DummyApplication(id=2)
         ]
 
         for i in range(task_count):

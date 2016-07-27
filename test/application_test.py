@@ -35,8 +35,8 @@ class TestApplication:
             app.start(rm)
 
     def test_is_a_copy_of(self):
-        app = DummyApplication(app_id=123, is_running=False)
-        app1 = DummyApplication(app_id=456)
+        app = DummyApplication(id=123, is_running=False)
+        app1 = DummyApplication(id=456)
         app2 = DummyApplication(is_running=True)
         app3 = DummyApplication(name="app3")
         app4 = DummyApplication(n_tasks=7)

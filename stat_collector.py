@@ -21,7 +21,7 @@ class DummyStatCollector(StatCollector):
 
 
 class InfluxDBClient(StatCollector):
-    def __init__(self, host, port, username, password, db):
+    def __init__(self, host, port=8086, username="root", password="root", db="telegraf"):
         self.client = BaseInfluxDBClient(
             host=host,
             port=port,

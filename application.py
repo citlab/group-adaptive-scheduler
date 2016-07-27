@@ -61,9 +61,9 @@ class Task:
 
 
 class DummyApplication(Application):
-    def __init__(self, name="app", n_tasks=8, app_id="id", is_running=False):
+    def __init__(self, name="app", n_tasks=8, id="id", is_running=False):
         super().__init__(name, n_tasks)
-        self.id = app_id
+        self.id = id
         self.is_running = is_running
 
     def command_line(self):

@@ -43,8 +43,8 @@ class DummyRM(ResourceManager):
 
 
 class YarnRM(YarnResourceManager, ResourceManager):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, address=None, port=8088, timeout=30):
+        super().__init__(address=address, port=port, timeout=timeout)
         self.cluster_started_on = self.cluster_information().data['clusterInfo']['startedOn']
         self.__next_app_id = self.cluster_metrics()['clusterMetrics']['appsSubmitted']
 

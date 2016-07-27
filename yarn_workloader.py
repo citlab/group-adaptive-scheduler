@@ -4,13 +4,12 @@ from application import Application, FlinkApplication
 
 
 class Experiment:
-    def __init__(self, applications=None, name="generated_experiment", path=None, jobs_path=None):
+    def __init__(self, applications=None, name="generated_experiment", xml_str=None, jobs_xml_str=None):
         self.name = name
         self.applications = [] if None else applications
 
-        if path is not None and jobs_path is not None:
-            with open(path, 'r') as exp, open(jobs_path, 'r') as jobs:
-                self.read(exp.read(), jobs.read())
+        if xml_str is not None and jobs_xml_str is not None:
+            self.read(xml_str, jobs_xml_str)
 
     def read(self, xml_str, jobs_xml_str):
         experiment = ET.fromstring(xml_str).find('experiment')
@@ -35,16 +34,15 @@ class Experiment:
 
 
 class Jobs:
-    def __init__(self, applications=None, path=None):
+    def __init__(self, applications=None, xml_str=None):
         self._data = {}
 
         if applications is not None:
             for app in applications:
                 self._data[app.name] = applications
 
-        if path is not None:
-            with open(path, 'r') as f:
-                self.read(f.read())
+        if xml_str is not None:
+            self.read(xml_str)
 
     def read(self, xml_str):
         jobs = ET.fromstring(xml_str)
@@ -55,6 +53,12 @@ class Jobs:
 
     def __getitem__(self, item) -> Application:
         return self._data[item].copy()
+
+    def __len__(self):
+        return len(self._data)
+
+    def names(self):
+        return list(self._data.keys())
 
 
 def xml_to_flink_application(job: ET.Element) -> FlinkApplication:
