@@ -27,7 +27,6 @@ parser = argparse.ArgumentParser(
     prog="pyScheduler",
     description="Schedule Application on a Cluster"
 )
-parser.set_defaults(func=lambda x:x)
 subparsers = parser.add_subparsers()
 parser_run = subparsers.add_parser("run", help="Run an experiment")
 parser_run.set_defaults(func=run)
