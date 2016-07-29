@@ -3,3 +3,4 @@
 /test.py
 /.cache/
 *.xml
+*.yaml

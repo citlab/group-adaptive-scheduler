@@ -1,0 +1,19 @@
+server:
+  disk_max: 500
+  net_max: 450
+
+resource_manager:
+  type: DummyRM
+  kwargs:
+    n_nodes: 5
+    n_containers: 7
+    node_pattern: NN{}
+    app_pattern: AA{}
+    apps_running:
+      test: yes
+    apps_submitted: 2
+    apps_finished:
+      test: yes
+
+stat_collector:
+  type: DummyStatCollector

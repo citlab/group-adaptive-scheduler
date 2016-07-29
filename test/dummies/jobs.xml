@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<jobs>
+    <job name="tpch-1-full">
+        <runner>
+            <name>flink</name>
+            <arguments>
+                <argument name="m">yarn-cluster</argument>
+                <argument name="yn">159</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/home/test/tests/tpch/test.jar </path>
+            <arguments>
+                <argument>hdfs:///data/tpch/1T/lineitem.tbl</argument>
+                <argument name="--arg2">hdfs:///data/tpch/1T/customer.tbl</argument>
+                <argument>hdfs:///data/tpch/1T/orders.tbl</argument>
+                <argument>hdfs:///user/test/tpch/result</argument>
+            </arguments>
+        </jar>
+    </job>
+    <job name="tpch-1">
+        <runner>
+            <name>flink</name>
+            <arguments>
+                <argument name="m">yarn-cluster</argument>
+                <argument name="yn">70</argument>
+                <argument name="yqu">default</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/home/test/tests/tpch/test.jar </path>
+            <arguments>
+            </arguments>
+        </jar>
+    </job>
+</jobs>

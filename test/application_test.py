@@ -15,14 +15,16 @@ class TestApplication:
         app = DummyApplication()
         for task in app.tasks:
             task.node = Node("N", 8)
-        rm = DummyRM(apps_running={app.id: True})
+        rm = DummyRM(apps_running={"A1": True})
         a = []
 
         def on_finish(app: Application):
             a.append(app.name)
 
         app.start(rm, on_finish, 0.1)
-        time.sleep(0.3)
+        time.sleep(0.2)
+        rm.apps_finished["A1"] = True
+        time.sleep(0.4)
 
         assert [app.name] == a
         assert app.is_running
@@ -57,6 +59,7 @@ class TestFlinkApplication:
     @staticmethod
     def gen_app():
         app = FlinkApplication("app", 8, "jar", ["arg1", "arg2"])
+        app.id = "flink"
 
         nodes = []
         for i, task in enumerate(app.tasks):
@@ -64,13 +67,15 @@ class TestFlinkApplication:
             task.node = node
             nodes.append(node)
 
+        app.node = Node("N_APP_M", 8)
+
         return app, nodes
 
     def test_hosts(self):
         app, nodes = self.gen_app()
         expected_hosts = [n.address for n in nodes]
 
-        assert expected_hosts == app.hosts()
+        assert expected_hosts == app.tasks_hosts()
 
     def test_command_line(self):
         app, _ = self.gen_app()
@@ -79,11 +84,13 @@ class TestFlinkApplication:
             "$FLINK_HOME/bin/flink",
             "run",
             "-m yarn-cluster",
+            "-ynm {}".format(app.name),
             "-yn 8",
-            "-yD fix.container.hosts=" + ",".join(app.hosts()),
+            "-yD fix.container.hosts=" + ",".join(app.tasks_hosts()) + "@@fix.am.host=N_APP_M",
             "jar",
             "arg1",
-            "arg2"
+            "arg2",
+            "1> {}.log".format(app.id)
         ]
 
         assert expected_cmd == app.command_line()

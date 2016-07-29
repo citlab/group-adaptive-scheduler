@@ -38,7 +38,7 @@ class ComplementarityEstimation(metaclass=ABCMeta):
         return [self.reverse_index[i] for i in indices]
 
 
-class EpsilonGreedyEstimation(ComplementarityEstimation):
+class EpsilonGreedy(ComplementarityEstimation):
     def __init__(self, recurrent_apps, initial_average=0., epsilon=0.1):
         super().__init__(recurrent_apps)
         self.epsilon = epsilon
@@ -81,7 +81,7 @@ class EpsilonGreedyEstimation(ComplementarityEstimation):
         return self.__greedy(sorted_nodes)
 
 
-class GradientEstimation(ComplementarityEstimation):
+class Gradient(ComplementarityEstimation):
     def __init__(self, recurrent_apps, alpha=0.01, initial_average=1.5):
         super().__init__(recurrent_apps)
         self.alpha = alpha

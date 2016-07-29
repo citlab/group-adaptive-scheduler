@@ -1,25 +1,25 @@
 import argparse
 import sys
-from yarn_workloader import Jobs, Experiment
-import numpy as np
+import generator
+import scheduler
+import complementarity
 
 
 def run(args):
-    print(args)
+    scheduler_class = getattr(scheduler, args.scheduler)
+    estimation_class = getattr(complementarity, args.estimation)
+    s = generator.scheduler(
+        scheduler_class=scheduler_class,
+        estimation_class=estimation_class,
+        exp_xml=args.experiment_xml,
+        jobs_xml=args.jobs_xml,
+        config_yaml=args.config_yaml
+    )
+    s.run()
 
 
 def gen(args):
-    jobs = Jobs(xml_str=args.jobs_xml.read())
-    n = len(jobs)
-    app_names = jobs.names()
-
-    applications = []
-    for i in range(args.n_jobs):
-        applications.append(
-            jobs[app_names[np.random.randint(0, n)]]
-        )
-
-    exp = Experiment(applications=applications)
+    exp = generator.experiment(args.jobs_xml.read(), args.n_jobs)
     args.output.write(exp.to_xml())
 
 
@@ -30,15 +30,15 @@ parser = argparse.ArgumentParser(
 subparsers = parser.add_subparsers()
 parser_run = subparsers.add_parser("run", help="Run an experiment")
 parser_run.set_defaults(func=run)
-parser_gen = subparsers.add_parser("gen", help="Generate experiment")
+parser_gen = subparsers.add_parser("gen", help="Generate an experiment from jobs list")
 parser_gen.set_defaults(func=gen)
 
 parser_run.add_argument(
-    "experiment_xml",
-    metavar="exp.xml",
+    "config_yaml",
+    metavar="config.yaml",
     type=argparse.FileType('r'),
     nargs="?",
-    help="path to the experiment.xml"
+    help="path to the config.yaml"
 )
 
 parser_run.add_argument(
@@ -50,21 +50,31 @@ parser_run.add_argument(
 )
 
 parser_run.add_argument(
-    "-rm",
-    dest="resource_manager",
-    type=str,
+    "experiment_xml",
+    metavar="exp.xml",
+    type=argparse.FileType('r'),
     nargs="?",
-    help="address(:port) of the Resource Manager server",
-    required=True
+    help="path to the experiment.xml"
 )
 
 parser_run.add_argument(
-    "-db",
-    dest="stats_collector",
+    "-s",
+    dest="scheduler",
     type=str,
     nargs="?",
-    help="address(:port) of the InfluxDB server",
-    required=True
+    help="scheduling strategy",
+    default="RoundRobin",
+    choices=["RoundRobin"]
+)
+
+parser_run.add_argument(
+    "-e",
+    dest="estimation",
+    type=str,
+    nargs="?",
+    help="complementarity estimation strategy",
+    default="EpsilonGreedy",
+    choices=["EpsilonGreedy", "Gradient"]
 )
 
 parser_gen.add_argument(

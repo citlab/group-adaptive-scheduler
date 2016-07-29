@@ -3,24 +3,49 @@ import time
 from typing import List
 from threading import Thread
 from resource_manager import ResourceManager
+from abc import ABCMeta, abstractmethod
 
 
 class NotCorrectlyScheduledError(Exception):
     pass
 
 
-class Application:
+class Container(metaclass=ABCMeta):
+    def __init__(self):
+        self.container_id = None
+        self.node = None
+        self.pid = None
+        self.is_negligible = False
+
+    @property
+    @abstractmethod
+    def application(self):
+        pass
+
+
+class Application(Container):
     def __init__(self, name, n_tasks):
+        super().__init__()
         self.name = name
+        self.n_tasks = n_tasks
         self.id = None
         self.is_running = False
-        self.tasks = [Task(self) for i in range(n_tasks)]
+        self.tasks = [Task(self) for i in range(self.n_tasks)]
         self.thread = None
+        self.is_negligible = True
+        self.n_containers = self.n_tasks + 1
+
+    @property
+    def application(self):
+        return self
 
     def __str__(self):
-        return "{} : {}".format(self.name, self.id)
+        return "{} ({})".format(self.id, self.name)
 
     def start(self, resource_manager: ResourceManager, on_finish=None, sleep_during_loop=2):
+        self.id = resource_manager.next_application_id()
+        print("Start Application {}".format(self))
+
         for task in self.tasks:
             if task.node is None:
                 raise NotCorrectlyScheduledError(
@@ -34,13 +59,15 @@ class Application:
         return [""]
 
     def _run(self, resource_manager: ResourceManager, on_finish, sleep_during_loop):
-        process = subprocess.Popen(self.command_line())
+        subprocess.run(" ".join(self.command_line()), shell=True)
 
-        while process.poll() is None:
+        while not resource_manager.is_application_finished(self.id):
             if not self.is_running and resource_manager.is_application_running(self.id):
                 self.is_running = True
 
             time.sleep(sleep_during_loop)
+
+        print("Application {} has finished".format(self))
 
         if callable(on_finish):
             on_finish(self)
@@ -52,12 +79,14 @@ class Application:
         return application.name == self.name and len(self.tasks) == len(application.tasks)
 
 
-class Task:
+class Task(Container):
     def __init__(self, application: Application):
-        self.application = application
-        self.container = None
-        self.node = None
-        self.pid = None
+        super().__init__()
+        self.app = application
+
+    @property
+    def application(self):
+        return self.app
 
 
 class DummyApplication(Application):
@@ -81,13 +110,20 @@ class FlinkApplication(Application):
             "$FLINK_HOME/bin/flink",
             "run",
             "-m yarn-cluster",
+            "-ynm " + self.name,
             "-yn {}".format(len(self.tasks)),
-            "-yD fix.container.hosts=" + ",".join(self.hosts()),
+            "-yD fix.container.hosts={tasks_host}@@fix.am.host={am_host}".format(
+                tasks_host=",".join(self.tasks_hosts()),
+                am_host=self.node.address
+            ),
             self.jar
         ]
-        return cmd + self.args
+        cmd += self.args
+        cmd.append("1> {}.log".format(self.id))
 
-    def hosts(self):
+        return cmd
+
+    def tasks_hosts(self):
         hosts = []
         for task in self.tasks:
             hosts.append(task.node.address)

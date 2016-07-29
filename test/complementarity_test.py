@@ -11,7 +11,7 @@ jobs = np.array([
 
 class TestIncrementalEstimation:
     def test_update_job(self):
-        estimation = EpsilonGreedyEstimation(jobs, initial_average=1)
+        estimation = EpsilonGreedy(jobs, initial_average=1)
 
         estimation.update_app(jobs[0], jobs[[1, 2]], 5)
         expected_data = np.array([
@@ -32,7 +32,7 @@ class TestIncrementalEstimation:
         assert np.allclose(expected_data, estimation.average)
 
     def test_expected_rate(self):
-        estimation = EpsilonGreedyEstimation(jobs, initial_average=1)
+        estimation = EpsilonGreedy(jobs, initial_average=1)
 
         estimation.average = np.array([
             [1, 3, 3],
@@ -47,7 +47,7 @@ class TestIncrementalEstimation:
 
 class TestGradientEstimation:
     def test_action_probability(self):
-        estimation = GradientEstimation(jobs)
+        estimation = Gradient(jobs)
 
         estimation.preferences = np.array([
             [0, 5, 1],
@@ -65,7 +65,7 @@ class TestGradientEstimation:
         assert np.allclose(expected_result, estimation.normalized_action_probabilities(jobs[0], jobs[[1, 2]]))
 
     def test_update_job(self):
-        estimation = GradientEstimation(jobs, alpha=0.1, initial_average=1.)
+        estimation = Gradient(jobs, alpha=0.1, initial_average=1.)
 
         estimation.preferences = np.array([
             [0, 5, 1],

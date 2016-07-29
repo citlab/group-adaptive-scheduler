@@ -3,49 +3,19 @@ import xml.etree.ElementTree as ET
 from application import Application, FlinkApplication
 
 
-class Experiment:
-    def __init__(self, applications=None, name="generated_experiment", xml_str=None, jobs_xml_str=None):
-        self.name = name
-        self.applications = [] if None else applications
-
-        if xml_str is not None and jobs_xml_str is not None:
-            self.read(xml_str, jobs_xml_str)
-
-    def read(self, xml_str, jobs_xml_str):
-        experiment = ET.fromstring(xml_str).find('experiment')
-        self.name = experiment.get('name', self.name)
-
-        self.applications = []
-        jobs = Jobs()
-        jobs.read(jobs_xml_str)
-
-        for job in experiment.iter('job'):
-            self.applications.append(jobs[job.get('name')])
-
-    def to_xml(self):
-        suite = ET.Element('suite')
-        experiment = ET.SubElement(suite, 'experiment')
-        experiment.set('name', self.name)
-        for job in self.applications:
-            j = ET.SubElement(experiment, 'job')
-            j.set('name', job.name)
-            j.text = '0'
-        return minidom.parseString(ET.tostring(suite, 'utf-8')).toprettyxml(indent="   ")
-
-
 class Jobs:
-    def __init__(self, applications=None, xml_str=None):
+    def __init__(self, xml=None, applications=None):
         self._data = {}
 
         if applications is not None:
             for app in applications:
                 self._data[app.name] = applications
 
-        if xml_str is not None:
-            self.read(xml_str)
+        if xml is not None:
+            self.read(xml)
 
-    def read(self, xml_str):
-        jobs = ET.fromstring(xml_str)
+    def read(self, xml):
+        jobs = ET.parse(xml).getroot()
 
         for job in jobs.iter('job'):
             app = xml_to_flink_application(job)
@@ -59,6 +29,9 @@ class Jobs:
 
     def names(self):
         return list(self._data.keys())
+
+    def applications(self):
+        return list(self._data.values())
 
 
 def xml_to_flink_application(job: ET.Element) -> FlinkApplication:
@@ -78,3 +51,34 @@ def xml_to_flink_application(job: ET.Element) -> FlinkApplication:
         args.append("{} {}".format(arg.get('name', ''), arg.text).strip())
 
     return FlinkApplication(name, n_task, jar, args)
+
+
+class Experiment:
+    def __init__(self, xml=None, applications=None, name="generated_experiment",
+                 jobs_xml=None, jobs: Jobs = None):
+        self.name = name
+        self.applications = [] if None else applications
+
+        if xml is not None and (jobs_xml is not None or jobs is not None):
+            if jobs is None:
+                jobs = Jobs(xml=jobs_xml)
+            self.read(xml, jobs)
+
+    def read(self, xml, jobs: Jobs):
+        experiment = ET.parse(xml).getroot().find('experiment')
+        self.name = experiment.get('name', self.name)
+
+        self.applications = []
+
+        for job in experiment.iter('job'):
+            self.applications.append(jobs[job.get('name')])
+
+    def to_xml(self):
+        suite = ET.Element('suite')
+        experiment = ET.SubElement(suite, 'experiment')
+        experiment.set('name', self.name)
+        for job in self.applications:
+            j = ET.SubElement(experiment, 'job')
+            j.set('name', job.name)
+            j.text = '0'
+        return minidom.parseString(ET.tostring(suite, 'utf-8')).toprettyxml(indent="   ")

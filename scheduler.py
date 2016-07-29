@@ -4,6 +4,8 @@ from cluster import Cluster
 from application import Application
 from complementarity import ComplementarityEstimation
 from repeated_timer import RepeatedTimer
+from threading import Lock
+from typing import List
 
 
 class NoApplicationCanBeScheduled(BaseException):
@@ -16,6 +18,7 @@ class Scheduler(metaclass=ABCMeta):
         self.estimation = estimation
         self.cluster = cluster
         self._timer = RepeatedTimer(update_interval, self.update_estimation)
+        self.scheduler_lock = Lock()
 
     def update_estimation(self):
         for (apps, usage) in self.cluster.apps_usage():
@@ -26,22 +29,28 @@ class Scheduler(metaclass=ABCMeta):
 
     @staticmethod
     def usage2rate(usage):
-        return usage.sum()
+        return usage[0] + usage[1] + 0.3 * usage[2]
 
     def add(self, app: Application):
         self.queue.append(app)
 
-    def update_schedule(self):
-        while True:
+    def add_all(self, apps: List[Application]):
+        self.queue.extend(apps)
+
+    def run(self):
+        self.scheduler_lock.acquire()
+        while len(self.queue) > 0:
             try:
                 app = self.schedule_application()
             except NoApplicationCanBeScheduled:
-                return
+                print("No Application can be scheduled right now")
+                break
             app.start(self.cluster.resource_manager, self._on_app_finished)
+        self.scheduler_lock.release()
 
     def _on_app_finished(self, app: Application):
-        print("Application {} has finished".format(app))
-        self.update_schedule()
+        self.cluster.remove_applications(app)
+        self.run()
 
     @abstractmethod
     def schedule_application(self) -> Application:
@@ -50,16 +59,20 @@ class Scheduler(metaclass=ABCMeta):
 
 class RoundRobin(Scheduler):
     def schedule_application(self):
-        tasks = self.queue[0].tasks
-        n = len(tasks)
-        if n > self.cluster.available_containers:
+        app = self.queue[0]
+        if app.n_containers > self.cluster.available_containers():
             raise NoApplicationCanBeScheduled
 
         i = 0
-        for node in self.cluster.nodes.values():
-            while node.available_containers > 0 and i < n:
-                node.add_task(tasks[i])
-                i += 1
+        while i < app.n_containers:
+            for node in self.cluster.nodes.values():
+                if node.available_containers() > 0:
+                    if i < app.n_tasks:
+                        node.add_container(app.tasks[i])
+                        i += 1
+                    # add application master
+                    elif i < app.n_containers:
+                        node.add_container(app)
 
         return self.queue.pop(0)
 
