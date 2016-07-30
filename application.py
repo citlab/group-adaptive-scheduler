@@ -135,4 +135,3 @@ class FlinkApplication(Application):
 
     def is_a_copy_of(self, application):
         return super().is_a_copy_of(application) and self.jar == application.jar and self.args == application.args
-

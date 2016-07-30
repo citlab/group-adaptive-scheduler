@@ -2,7 +2,6 @@ from influxdb import InfluxDBClient
 from abc import ABCMeta, abstractmethod
 import numpy as np
 from typing import Dict
-from datetime import datetime
 
 
 class Server:
@@ -55,10 +54,11 @@ class InfluxDB(StatCollector):
 
     def _cpu(self, time_in_sec, servers: Dict[str, Server]):
         query_template = """
-            SELECT mean(usage_nice)
+            SELECT usage_user
             FROM cpu
             WHERE time > now() - {time_in_sec}s
             AND host =~ /^({hosts})$/
+            AND cpu = 'cpu-total'
             GROUP BY host
         """
         data = self.client.query(query_template.format(
@@ -68,13 +68,13 @@ class InfluxDB(StatCollector):
 
         cpu = {}
         for address in servers.keys():
-            cpu[address] = next(data.get_points(tags={'host': address}))['mean']
+            cpu[address] = self._mean(data.get_points(tags={'host': address}), 'usage_user')
 
         return cpu
 
     def _disk(self, time_in_sec, servers: Dict[str, Server]):
         query_template = """
-            SELECT read_bytes, write_bytes
+            SELECT derivative(read_bytes, 1s)
             FROM diskio
             WHERE time > now() - {time_in_sec}s
             AND "name" = '{disk_name}'
@@ -89,13 +89,13 @@ class InfluxDB(StatCollector):
 
         disk = {}
         for address in servers.keys():
-            disk[address] = self._mean_derivative(data.get_points(tags={'host': address}))
+            disk[address] = self._mean(data.get_points(tags={'host': address}), 'derivative') / 1024 ** 2
 
         return disk
 
     def _net(self, time_in_sec, servers: Dict[str, Server]):
         query_template = """
-            SELECT bytes_recv, bytes_sent
+            SELECT derivative(bytes_recv, 1s)
             FROM net
             WHERE time > now() - {time_in_sec}s
             AND interface = '{net_interface}'
@@ -110,30 +110,16 @@ class InfluxDB(StatCollector):
 
         net = {}
         for address in servers.keys():
-            net[address] = self._mean_derivative(data.get_points(tags={'host': address}))
+            net[address] = self._mean(data.get_points(tags={'host': address}), 'derivative') / 1024 ** 2
 
         return net
 
-    def _mean_derivative(self, points):
-        point_a = next(points)
-        point_b = point_a
-        for point_b in points:
-            pass
+    @staticmethod
+    def _mean(points, key):
+        points_sum = 0
+        n = 0
+        for p in points:
+            n += 1
+            points_sum += p[key]
 
-        if point_b == point_a:
-            return 0
-
-        t_a = datetime.strptime(point_a['time'], self.time_format)
-        t_b = datetime.strptime(point_b['time'], self.time_format)
-        time = (t_b - t_a).total_seconds()
-
-        a = 0
-        b = 0
-        for key in point_a.keys():
-            if key != 'time':
-                a += point_a[key]
-                b += point_b[key]
-
-        return (b - a) / time / 1e9
-
-
+        return points_sum / n

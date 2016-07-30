@@ -47,4 +47,3 @@ def scheduler(scheduler_class, estimation_class, exp_xml, jobs_xml, config_yaml,
     _scheduler.add_all(exp.applications)
 
     return _scheduler
-

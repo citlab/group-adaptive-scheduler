@@ -1,7 +1,7 @@
 import generator
 from resource_manager import DummyRM
 from stat_collector import DummyStatCollector, Server
-from yarn_workloader import Jobs, Experiment
+from yarn_workloader import Experiment
 from scheduler import RoundRobin
 from complementarity import EpsilonGreedy
 
@@ -66,4 +66,3 @@ class TestGenerators:
         assert len(scheduler.queue) == len(exp.applications)
         for i in range(len(scheduler.queue)):
             assert scheduler.queue[i].is_a_copy_of(exp.applications[i])
-
