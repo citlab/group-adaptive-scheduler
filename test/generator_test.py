@@ -30,6 +30,8 @@ class TestGenerators:
 
         assert Server.disk_max == 500
         assert Server.net_max == 450
+        assert Server.disk_name == "disk"
+        assert Server.net_interface == "net"
 
     def test_experiment(self):
         with open('test/dummies/jobs.xml') as jobs_xml:

@@ -14,9 +14,10 @@ def cluster(yaml_source):
     stat = getattr(stat_collector, config['stat_collector']['type'])(
         **config['stat_collector'].get('kwargs', {})
     )
-    if config.get('server', False):
-        stat_collector.Server.disk_max = config['server'].get('disk_max', stat_collector.Server.disk_max)
-        stat_collector.Server.net_max = config['server'].get('net_max', stat_collector.Server.net_max)
+    stat_collector.Server.disk_max = config['server']['disk_max']
+    stat_collector.Server.net_max = config['server']['net_max']
+    stat_collector.Server.disk_name = config['server']['disk_name']
+    stat_collector.Server.net_interface = config['server']['net_interface']
 
     return Cluster(rm, stat)
 

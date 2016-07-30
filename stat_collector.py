@@ -6,8 +6,10 @@ from datetime import datetime
 
 
 class Server:
-    disk_max = 300
-    net_max = 125
+    disk_max = 1e3
+    net_max = 1e3
+    net_interface = ''
+    disk_name = ''
 
     def __init__(self, address):
         self.address = address
@@ -27,16 +29,16 @@ class DummyStatCollector(StatCollector):
 class InfluxDB(StatCollector):
     time_format = "%Y-%m-%dT%H:%M:%SZ"
 
-    def __init__(self, host, port=8086, username="root", password="root", db="telegraf"):
+    def __init__(self, address, port=8086, username="root", password="root", db="telegraf"):
         self.client = InfluxDBClient(
-            host=host,
+            host=address,
             port=port,
             username=username,
             password=password,
             database=db
         )
 
-    def mean_usage(self, servers, time_interval=60):
+    def mean_usage(self, servers: Dict[str, Server], time_interval=60):
         cpu = self._cpu(time_interval, servers)
         disk = self._disk(time_interval, servers)
         net = self._net(time_interval, servers)
@@ -51,7 +53,7 @@ class InfluxDB(StatCollector):
 
         return results
 
-    def _cpu(self, time_in_sec, servers):
+    def _cpu(self, time_in_sec, servers: Dict[str, Server]):
         query_template = """
             SELECT mean(usage_nice)
             FROM cpu
@@ -61,7 +63,7 @@ class InfluxDB(StatCollector):
         """
         data = self.client.query(query_template.format(
             time_in_sec=int(time_in_sec),
-            hosts="|".join([s.address for s in servers])
+            hosts="|".join([address for address in servers.keys()])
         ))
 
         cpu = {}
@@ -70,18 +72,19 @@ class InfluxDB(StatCollector):
 
         return cpu
 
-    def _disk(self, time_in_sec, servers):
+    def _disk(self, time_in_sec, servers: Dict[str, Server]):
         query_template = """
             SELECT read_bytes, write_bytes
             FROM diskio
             WHERE time > now() - {time_in_sec}s
-            and name = 'sda'
+            AND "name" = '{disk_name}'
             AND host =~ /^({hosts})$/
             GROUP BY host
         """
         data = self.client.query(query_template.format(
             time_in_sec=int(time_in_sec),
-            hosts="|".join([s.address for s in servers])
+            disk_name=Server.disk_name,
+            hosts="|".join([address for address in servers.keys()]),
         ))
 
         disk = {}
@@ -90,18 +93,19 @@ class InfluxDB(StatCollector):
 
         return disk
 
-    def _net(self, time_in_sec, servers):
+    def _net(self, time_in_sec, servers: Dict[str, Server]):
         query_template = """
             SELECT bytes_recv, bytes_sent
             FROM net
             WHERE time > now() - {time_in_sec}s
-            AND interface = 'enp0s8'
+            AND interface = '{net_interface}'
             AND host =~ /^({hosts})$/
             GROUP BY host
         """
         data = self.client.query(query_template.format(
             time_in_sec=int(time_in_sec),
-            hosts="|".join([s.address for s in servers])
+            net_interface=Server.net_interface,
+            hosts="|".join([address for address in servers.keys()])
         ))
 
         net = {}

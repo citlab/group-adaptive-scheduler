@@ -1,6 +1,8 @@
 server:
   disk_max: 500
   net_max: 450
+  disk_name: disk
+  net_interface: net
 
 resource_manager:
   type: DummyRM
