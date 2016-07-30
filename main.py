@@ -15,7 +15,7 @@ def run(args):
         jobs_xml=args.jobs_xml,
         config_yaml=args.config_yaml
     )
-    s.run()
+    s.start()
 
 
 def gen(args):

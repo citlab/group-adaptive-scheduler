@@ -6,6 +6,7 @@ from complementarity import ComplementarityEstimation
 from repeated_timer import RepeatedTimer
 from threading import Lock
 from typing import List
+import time
 
 
 class NoApplicationCanBeScheduled(BaseException):
@@ -19,6 +20,17 @@ class Scheduler(metaclass=ABCMeta):
         self.cluster = cluster
         self._timer = RepeatedTimer(update_interval, self.update_estimation)
         self.scheduler_lock = Lock()
+        self.started_at = None
+        self.stopped_at = None
+
+    def start(self):
+        self.schedule()
+        self._timer.start()
+        self.started_at = time.time()
+
+    def stop(self):
+        self._timer.cancel()
+        self.stopped_at = time.time()
 
     def update_estimation(self):
         for (apps, usage) in self.cluster.apps_usage():
@@ -37,8 +49,7 @@ class Scheduler(metaclass=ABCMeta):
     def add_all(self, apps: List[Application]):
         self.queue.extend(apps)
 
-    def run(self):
-        self.scheduler_lock.acquire()
+    def schedule(self):
         while len(self.queue) > 0:
             try:
                 app = self.schedule_application()
@@ -46,11 +57,17 @@ class Scheduler(metaclass=ABCMeta):
                 print("No Application can be scheduled right now")
                 break
             app.start(self.cluster.resource_manager, self._on_app_finished)
-        self.scheduler_lock.release()
 
     def _on_app_finished(self, app: Application):
+        self.scheduler_lock.acquire()
         self.cluster.remove_applications(app)
-        self.run()
+        if len(self.queue) == 0 and len(self.cluster.applications()) == 0:
+            self.stop()
+            delta = self.stopped_at - self.started_at
+            print("Queue took {:.0f}'{:.0f} to complete".format(delta // 60, delta % 60))
+        else:
+            self.schedule()
+        self.scheduler_lock.release()
 
     @abstractmethod
     def schedule_application(self) -> Application:
@@ -73,6 +90,5 @@ class RoundRobin(Scheduler):
                     # add application master
                     elif i < app.n_containers:
                         node.add_container(app)
-
-        return self.queue.pop(0)
+                        return self.queue.pop(0)
 
