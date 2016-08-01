@@ -58,7 +58,7 @@ class TestApplication:
 class TestFlinkApplication:
     @staticmethod
     def gen_app():
-        app = FlinkApplication("app", 8, "jar", ["arg1", "arg2"])
+        app = FlinkApplication("app", 8, "jar", ["arg1", "TEMP"], tm=1536, jar_class="JarClassK")
         app.id = "flink"
 
         nodes = []
@@ -87,13 +87,19 @@ class TestFlinkApplication:
             "-ynm {}".format(app.name),
             "-yn 8",
             "-yD fix.container.hosts=" + ",".join(app.tasks_hosts()) + "@@fix.am.host=N_APP_M",
+            "-ytm 1536",
+            "-c JarClassK",
             "jar",
             "arg1",
-            "arg2",
+            "TEMP",
             "1> {}.log".format(app.id)
         ]
+        cmd = app.command_line()
+        for i in range(10):
+            assert expected_cmd[i] == cmd[i]
 
-        assert expected_cmd == app.command_line()
+        assert "hdfs:///tmp/" in cmd[10]
+        assert expected_cmd[11] in cmd[11]
 
     def test_is_a_copy_of(self):
         app = FlinkApplication("app", 8, jar="jar", args=["arg1"])

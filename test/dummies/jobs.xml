@@ -6,6 +6,8 @@
             <arguments>
                 <argument name="m">yarn-cluster</argument>
                 <argument name="yn">159</argument>
+                <argument name="ytm">1536</argument>
+                <argument name="c">JarClassK</argument>
             </arguments>
         </runner>
         <jar>
@@ -14,7 +16,7 @@
                 <argument>hdfs:///data/tpch/1T/lineitem.tbl</argument>
                 <argument name="--arg2">hdfs:///data/tpch/1T/customer.tbl</argument>
                 <argument>hdfs:///data/tpch/1T/orders.tbl</argument>
-                <argument>hdfs:///user/test/tpch/result</argument>
+                <argument>TEMP</argument>
             </arguments>
         </jar>
     </job>

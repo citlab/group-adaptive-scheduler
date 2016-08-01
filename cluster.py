@@ -80,6 +80,14 @@ class Cluster:
             apps += node.applications()
         return set(apps)
 
+    def non_full_node_applications(self):
+        apps = []
+        for node in self.nodes.values():
+            if node.available_containers() > 0:
+                apps += node.applications()
+        return set(apps)
+
+
     def remove_applications(self, application: Application):
         for node in self.nodes.values():
             node.remove_application(application)

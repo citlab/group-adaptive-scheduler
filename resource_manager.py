@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 from yarn_api_client import ResourceManager as YarnResourceManager
-from yarn_api_client.errors import APIError
 from typing import Dict
 from threading import Lock
 
@@ -76,7 +75,8 @@ class Yarn(YarnResourceManager, ResourceManager):
 
         try:
             output = self.cluster_application(application_id).data['app']['state'] == "RUNNING"
-        except APIError:
+        except BaseException as e:
+            print(e)
             output = False
 
         self.lock.release()
@@ -87,7 +87,8 @@ class Yarn(YarnResourceManager, ResourceManager):
 
         try:
             output = self.cluster_application(application_id).data['app']['state'] == "FINISHED"
-        except APIError:
+        except BaseException as e:
+            print(e)
             output = False
 
         self.lock.release()

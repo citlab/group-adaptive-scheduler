@@ -12,11 +12,12 @@ class Jobs:
                 self._data[app.name] = applications
 
         if xml is not None:
-            self.read(xml)
+            self.__read(ET.parse(xml).getroot())
 
-    def read(self, xml):
-        jobs = ET.parse(xml).getroot()
+    def read(self, xml_str: str):
+        self.__read(ET.fromstring(xml_str))
 
+    def __read(self, jobs):
         for job in jobs.iter('job'):
             app = xml_to_flink_application(job)
             self._data[app.name] = app
@@ -37,10 +38,16 @@ class Jobs:
 def xml_to_flink_application(job: ET.Element) -> FlinkApplication:
     name = job.get('name')
     n_task = 0
+    tm = None
+    jar_class = None
 
     for arg in job.find('runner/arguments').iter('argument'):
         if arg.get('name') == 'yn':
             n_task = int(arg.text)
+        if arg.get('name') == 'ytm':
+            tm = int(arg.text)
+        if arg.get('name') == 'c':
+            jar_class = arg.text
 
     if n_task == 0:
         raise ValueError("runner/arguments/argument with name = yn was not found")
@@ -50,7 +57,7 @@ def xml_to_flink_application(job: ET.Element) -> FlinkApplication:
     for arg in job.find('jar/arguments').iter('argument'):
         args.append("{} {}".format(arg.get('name', ''), arg.text).strip())
 
-    return FlinkApplication(name, n_task, jar, args)
+    return FlinkApplication(name, n_task, jar, args, jar_class=jar_class, tm=tm)
 
 
 class Experiment:
@@ -62,12 +69,13 @@ class Experiment:
         if xml is not None and (jobs_xml is not None or jobs is not None):
             if jobs is None:
                 jobs = Jobs(xml=jobs_xml)
-            self.read(xml, jobs)
+            self.__read(ET.parse(xml).getroot().find('experiment'), jobs)
 
-    def read(self, xml, jobs: Jobs):
-        experiment = ET.parse(xml).getroot().find('experiment')
+    def read(self, xml_str, jobs: Jobs):
+        self.__read(ET.fromstring(xml_str).find('experiment'), jobs)
+
+    def __read(self, experiment, jobs: Jobs):
         self.name = experiment.get('name', self.name)
-
         self.applications = []
 
         for job in experiment.iter('job'):

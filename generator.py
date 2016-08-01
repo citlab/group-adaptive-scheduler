@@ -22,8 +22,9 @@ def cluster(yaml_source):
     return Cluster(rm, stat)
 
 
-def experiment(jobs_xml, n_jobs):
-    jobs = Jobs(jobs_xml)
+def experiment(jobs_xml_str, n_jobs):
+    jobs = Jobs()
+    jobs.read(jobs_xml_str)
     n = len(jobs)
     app_names = jobs.names()
 
@@ -36,9 +37,11 @@ def experiment(jobs_xml, n_jobs):
     return Experiment(applications=applications)
 
 
-def scheduler(scheduler_class, estimation_class, exp_xml, jobs_xml, config_yaml, estimation_kwargs=None):
-    jobs = Jobs(jobs_xml)
-    exp = Experiment(exp_xml, jobs=jobs)
+def scheduler(scheduler_class, estimation_class, exp_xml_str, jobs_xml_str, config_yaml, estimation_kwargs=None):
+    jobs = Jobs()
+    jobs.read(jobs_xml_str)
+    exp = Experiment()
+    exp.read(exp_xml_str, jobs)
 
     _scheduler = scheduler_class(
         estimation=estimation_class(jobs.applications(), **({} if estimation_kwargs is None else estimation_kwargs)),

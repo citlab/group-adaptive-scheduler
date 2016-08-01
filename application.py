@@ -4,6 +4,7 @@ from typing import List
 from threading import Thread
 from resource_manager import ResourceManager
 from abc import ABCMeta, abstractmethod
+import uuid
 
 
 class NotCorrectlyScheduledError(Exception):
@@ -59,7 +60,9 @@ class Application(Container):
         return [""]
 
     def _run(self, resource_manager: ResourceManager, on_finish, sleep_during_loop):
-        subprocess.run(" ".join(self.command_line()), shell=True)
+        cmd = " ".join(self.command_line())
+        print("Start {} with cmd: {}".format(self.id, cmd))
+        subprocess.run(cmd, shell=True)
 
         while not resource_manager.is_application_finished(self.id):
             if not self.is_running and resource_manager.is_application_running(self.id):
@@ -100,9 +103,11 @@ class DummyApplication(Application):
 
 
 class FlinkApplication(Application):
-    def __init__(self, name, n_task, jar, args):
+    def __init__(self, name, n_task, jar, args, jar_class=None, tm=None):
         super().__init__(name, n_task)
         self.jar = jar
+        self.jar_class = jar_class
+        self.tm = tm
         self.args = args
 
     def command_line(self):
@@ -115,10 +120,22 @@ class FlinkApplication(Application):
             "-yD fix.container.hosts={tasks_host}@@fix.am.host={am_host}".format(
                 tasks_host=",".join(self.tasks_hosts()),
                 am_host=self.node.address
-            ),
-            self.jar
+            )
         ]
-        cmd += self.args
+        if self.tm is not None:
+            cmd.append("-ytm {}".format(self.tm))
+
+        if self.jar_class is not None:
+            cmd.append("-c {}".format(self.jar_class))
+
+        cmd.append(self.jar)
+
+        for arg in self.args:
+            if "TEMP" in arg:
+                cmd.append("hdfs:///tmp/" + str(uuid.uuid4()))
+            else:
+                cmd.append(arg)
+
         cmd.append("1> {}.log".format(self.id))
 
         return cmd
@@ -131,7 +148,9 @@ class FlinkApplication(Application):
         return hosts
 
     def copy(self):
-        return FlinkApplication(self.name, len(self.tasks), self.jar, self.args)
+        return FlinkApplication(self.name, len(self.tasks), self.jar, self.args, jar_class=self.jar_class, tm=self.tm)
 
     def is_a_copy_of(self, application):
-        return super().is_a_copy_of(application) and self.jar == application.jar and self.args == application.args
+        return super().is_a_copy_of(application) and self.jar == application.jar \
+               and self.args == application.args and self.jar_class == application.jar_class \
+               and self.tm == application.tm

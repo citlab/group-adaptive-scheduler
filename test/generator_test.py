@@ -35,7 +35,7 @@ class TestGenerators:
 
     def test_experiment(self):
         with open('test/dummies/jobs.xml') as jobs_xml:
-            exp = generator.experiment(jobs_xml, 4)
+            exp = generator.experiment(jobs_xml.read(), 4)
 
         assert len(exp.applications) == 4
 
@@ -46,8 +46,8 @@ class TestGenerators:
             scheduler = generator.scheduler(
                 scheduler_class=RoundRobin,
                 estimation_class=EpsilonGreedy,
-                exp_xml=exp_file,
-                jobs_xml=jobs_file,
+                exp_xml_str=exp_file.read(),
+                jobs_xml_str=jobs_file.read(),
                 config_yaml=config,
                 estimation_kwargs={
                     'epsilon': 10

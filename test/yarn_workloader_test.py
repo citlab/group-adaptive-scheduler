@@ -7,11 +7,13 @@ class Xml2Application:
             name="tpch-1-full",
             n_task=159,
             jar="/home/test/tests/tpch/test.jar",
+            jar_class="JarClassK",
+            tm=1536,
             args=[
                 "hdfs:///data/tpch/1T/lineitem.tbl",
                 "--arg2 hdfs:///data/tpch/1T/customer.tbl",
                 "hdfs:///data/tpch/1T/orders.tbl",
-                "hdfs:///user/test/tpch/result"
+                "TEMP"
             ]
     )
 

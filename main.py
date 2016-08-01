@@ -11,8 +11,8 @@ def run(args):
     s = generator.scheduler(
         scheduler_class=scheduler_class,
         estimation_class=estimation_class,
-        exp_xml=args.experiment_xml,
-        jobs_xml=args.jobs_xml,
+        exp_xml_str=args.experiment_xml.read(),
+        jobs_xml_str=args.jobs_xml.read(),
         config_yaml=args.config_yaml
     )
     s.start()
