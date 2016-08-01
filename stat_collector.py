@@ -54,7 +54,7 @@ class InfluxDB(StatCollector):
 
     def _cpu(self, time_in_sec, servers: Dict[str, Server]):
         query_template = """
-            SELECT usage_user
+            SELECT usage_user as cpu_usage
             FROM cpu
             WHERE time > now() - {time_in_sec}s
             AND host =~ /^({hosts})$/
@@ -68,13 +68,13 @@ class InfluxDB(StatCollector):
 
         cpu = {}
         for address in servers.keys():
-            cpu[address] = self._mean(data.get_points(tags={'host': address}), 'usage_user')
+            cpu[address] = self._mean(data.get_points(tags={'host': address}), 'cpu_usage')
 
         return cpu
 
     def _disk(self, time_in_sec, servers: Dict[str, Server]):
         query_template = """
-            SELECT derivative(read_bytes, 1s)
+            SELECT derivative(read_bytes, 1s) + derivative(write_bytes, 1s) as disk_usage
             FROM diskio
             WHERE time > now() - {time_in_sec}s
             AND "name" = '{disk_name}'
@@ -89,13 +89,18 @@ class InfluxDB(StatCollector):
 
         disk = {}
         for address in servers.keys():
-            disk[address] = self._mean(data.get_points(tags={'host': address}), 'derivative') / 1024 ** 2
+            disk[address] = self._mean(
+                data.get_points(tags={'host': address}),
+                'disk_usage',
+                Server.disk_max * 1024 ** 2
+            )
+            disk[address] /= 1024 ** 2
 
         return disk
 
     def _net(self, time_in_sec, servers: Dict[str, Server]):
         query_template = """
-            SELECT derivative(bytes_recv, 1s)
+            SELECT derivative(bytes_recv, 1s) + derivative(bytes_sent, 1s) as net_usage
             FROM net
             WHERE time > now() - {time_in_sec}s
             AND interface = '{net_interface}'
@@ -110,16 +115,23 @@ class InfluxDB(StatCollector):
 
         net = {}
         for address in servers.keys():
-            net[address] = self._mean(data.get_points(tags={'host': address}), 'derivative') / 1024 ** 2
+            net[address] = self._mean(
+                data.get_points(tags={'host': address}),
+                'net_usage',
+                Server.net_max * 1024 ** 2
+            )
+            net[address] /= 1024 ** 2
 
         return net
 
     @staticmethod
-    def _mean(points, key):
+    def _mean(points, key, p_max=100.):
         points_sum = 0
         n = 0
         for p in points:
             n += 1
-            points_sum += p[key]
+            points_sum += min(p[key], p_max)
+            if p[key] > p_max:
+                print("/!\\ Max for {} exceed by {:.2%}".format(key, p[key] / p_max))
 
         return points_sum / n

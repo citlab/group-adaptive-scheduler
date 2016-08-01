@@ -41,8 +41,8 @@ def scheduler(scheduler_class, estimation_class, exp_xml, jobs_xml, config_yaml,
     exp = Experiment(exp_xml, jobs=jobs)
 
     _scheduler = scheduler_class(
-        estimation_class(jobs.applications(), **({} if estimation_kwargs is None else estimation_kwargs)),
-        cluster(config_yaml)
+        estimation=estimation_class(jobs.applications(), **({} if estimation_kwargs is None else estimation_kwargs)),
+        cluster=cluster(config_yaml)
     )
     _scheduler.add_all(exp.applications)
 

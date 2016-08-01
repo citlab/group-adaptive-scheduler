@@ -3,6 +3,8 @@ from abc import ABCMeta, abstractmethod
 import operator
 from typing import Dict, List
 from application import Application
+import os
+import errno
 
 
 class ComplementarityEstimation(metaclass=ABCMeta):
@@ -27,6 +29,10 @@ class ComplementarityEstimation(metaclass=ABCMeta):
     def update_app(self, app: Application, concurrent_apps: List[Application], rate: float):
         pass
 
+    @abstractmethod
+    def save(self, folder):
+        pass
+
     def indices(self, apps: List[Application]) -> List[int]:
         if isinstance(apps, Application):
             apps = [apps]
@@ -36,6 +42,18 @@ class ComplementarityEstimation(metaclass=ABCMeta):
         if not isinstance(indices, list):
             indices = [indices]
         return [self.reverse_index[i] for i in indices]
+
+    def _save(self, folder, filename, matrix):
+        try:
+            os.makedirs(folder)
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+
+        np.save("{}/{}.npy".format(folder, filename), matrix)
+        with open("{}/{}_axes.txt".format(folder, filename), "w") as f:
+            for i in range(len(self.reverse_index)):
+                f.write(self.reverse_index[i] + "\n")
 
 
 class EpsilonGreedy(ComplementarityEstimation):
@@ -79,6 +97,10 @@ class EpsilonGreedy(ComplementarityEstimation):
         sorted_nodes = list(map(operator.itemgetter(0), sorted_nodes_apps))
 
         return self.__greedy(sorted_nodes)
+
+    def save(self, folder):
+        self._save(folder, "average", self.average)
+        self._save(folder, "ucount", self.update_count)
 
 
 class Gradient(ComplementarityEstimation):
@@ -136,5 +158,10 @@ class Gradient(ComplementarityEstimation):
         p /= p.sum()
 
         return self.__choose(nodes, p)
+
+    def save(self, folder):
+        self._save(folder, "average", self.average)
+        self._save(folder, "preferences", self.preferences)
+        self._save(folder, "ucount", self.update_count)
 
 

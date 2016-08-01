@@ -17,6 +17,9 @@ def run(args):
     )
     s.start()
 
+    if args.estimation_folder is not None:
+        s.estimation.save(args.estimation_folder)
+
 
 def gen(args):
     exp = generator.experiment(args.jobs_xml.read(), args.n_jobs)
@@ -64,7 +67,7 @@ parser_run.add_argument(
     nargs="?",
     help="scheduling strategy",
     default="RoundRobin",
-    choices=["RoundRobin"]
+    choices=["RoundRobin", "QueueOrder"]
 )
 
 parser_run.add_argument(
@@ -75,6 +78,15 @@ parser_run.add_argument(
     help="complementarity estimation strategy",
     default="EpsilonGreedy",
     choices=["EpsilonGreedy", "Gradient"]
+)
+
+parser_run.add_argument(
+    "-eo",
+    dest="estimation_folder",
+    type=str,
+    nargs="?",
+    help="estimation data folder",
+    default=None
 )
 
 parser_gen.add_argument(

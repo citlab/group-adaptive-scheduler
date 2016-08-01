@@ -77,6 +77,10 @@ class Scheduler(metaclass=ABCMeta):
 class RoundRobin(Scheduler):
     def schedule_application(self):
         app = self.queue[0]
+        self.place_containers(app)
+        return self.queue.pop(0)
+
+    def place_containers(self, app: Application):
         if app.n_containers > self.cluster.available_containers():
             raise NoApplicationCanBeScheduled
 
@@ -90,5 +94,25 @@ class RoundRobin(Scheduler):
                     # add application master
                     elif i < app.n_containers:
                         node.add_container(app)
-                        return self.queue.pop(0)
+                        return
 
+
+class QueueOrder(RoundRobin):
+    def __init__(self, jobs_to_peek=5, **kwargs):
+        super().__init__(**kwargs)
+        self.jobs_to_peek = jobs_to_peek
+
+    def schedule_application(self):
+        scheduled_apps = self.cluster.applications()
+        available_containers = self.cluster.available_containers()
+        index = list(range(min(self.jobs_to_peek, len(self.queue))))
+
+        while len(index) > 0:
+            best_i = self.estimation.best_app_index(
+                scheduled_apps,
+                [self.queue[i] for i in index]
+            )
+            if self.queue[best_i].n_containers <= available_containers:
+                self.place_containers(self.queue[best_i])
+                return self.queue.pop(best_i)
+            index.remove(best_i)
