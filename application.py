@@ -23,8 +23,13 @@ class Container(metaclass=ABCMeta):
     def application(self):
         pass
 
+    def __str__(self):
+        return str(self.application)
+
 
 class Application(Container):
+    print_command_line = False
+
     def __init__(self, name, n_tasks):
         super().__init__()
         self.name = name
@@ -43,7 +48,7 @@ class Application(Container):
     def __str__(self):
         return "{} ({})".format(self.id, self.name)
 
-    def start(self, resource_manager: ResourceManager, on_finish=None, sleep_during_loop=2):
+    def start(self, resource_manager: ResourceManager, on_finish=None, sleep_during_loop=5):
         self.id = resource_manager.next_application_id()
         print("Start Application {}".format(self))
 
@@ -61,8 +66,9 @@ class Application(Container):
 
     def _run(self, resource_manager: ResourceManager, on_finish, sleep_during_loop):
         cmd = " ".join(self.command_line())
-        print("Start {} with cmd: {}".format(self.id, cmd))
-        subprocess.run(cmd, shell=True)
+        if self.print_command_line:
+            print("Start {} with cmd: {}".format(self.id, cmd))
+        subprocess.Popen(cmd, shell=True)
 
         while not resource_manager.is_application_finished(self.id):
             if not self.is_running and resource_manager.is_application_running(self.id):
@@ -117,10 +123,12 @@ class FlinkApplication(Application):
             "-m yarn-cluster",
             "-ynm " + self.name,
             "-yn {}".format(len(self.tasks)),
-            "-yD fix.container.hosts={tasks_host}@@fix.am.host={am_host}".format(
+            "-yD fix.container.hosts={tasks_host}".format(
                 tasks_host=",".join(self.tasks_hosts()),
-                am_host=self.node.address
-            )
+            ),
+            # "-yDfix.am.host={am_host}".format(
+            #     am_host=self.node.address
+            # )
         ]
         if self.tm is not None:
             cmd.append("-ytm {}".format(self.tm))
@@ -132,11 +140,11 @@ class FlinkApplication(Application):
 
         for arg in self.args:
             if "TEMP" in arg:
-                cmd.append("hdfs:///tmp/" + str(uuid.uuid4()))
+                cmd.append(arg.replace('TEMP', 'hdfs:///tmp/' + str(uuid.uuid4()).replace('-', '')))
             else:
                 cmd.append(arg)
 
-        cmd.append("1> {}.log".format(self.id))
+        cmd.append("1> apps_log/{}.log".format(self.id))
 
         return cmd
 

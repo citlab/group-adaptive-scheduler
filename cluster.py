@@ -3,6 +3,8 @@ from resource_manager import ResourceManager
 from application import Application, Container
 from typing import List, Tuple
 import numpy as np
+from tabulate import tabulate
+import operator
 
 
 class Node(Server):
@@ -13,10 +15,11 @@ class Node(Server):
 
     def add_container(self, container: Container):
         if self.available_containers() < 1:
-            raise ValueError("Not enough containers to schedule a container")
+            raise ValueError("No container is available")
 
         if container.node is not None:
             raise ValueError("Container has already been scheduled on a node")
+
         self.containers.append(container)
         container.node = self
 
@@ -41,6 +44,9 @@ class Node(Server):
     def available_containers(self):
         return self.n_containers - len(self.containers)
 
+    def is_empty(self):
+        return len(self.containers) == 0
+
 
 class Cluster:
     def __init__(self, resource_manager: ResourceManager, stat_collector: StatCollector):
@@ -63,11 +69,18 @@ class Cluster:
         
         return apps_usage
 
-    def node_running_apps(self):
+    def empty_nodes(self):
+        return [node for node in self.nodes.values() if node.is_empty()]
+
+    def non_full_nodes(self):
+        return [node for node in self.nodes.values() if node.available_containers() > 0]
+
+    def node_running_apps(self, with_full_nodes=True):
         apps = {}
 
         for address, node in self.nodes.items():
-            apps[address] = [app for app in node.applications() if app.is_running]
+            if with_full_nodes or node.available_containers() > 0:
+                apps[address] = [app for app in node.applications() if app.is_running]
             
         return apps
 
@@ -87,9 +100,22 @@ class Cluster:
                 apps += node.applications()
         return set(apps)
 
-
     def remove_applications(self, application: Application):
         for node in self.nodes.values():
             node.remove_application(application)
+
+    def print_nodes(self):
+        headers = ["Nodes", "Applications"]
+        rows = []
+
+        for address, node in self.nodes.items():
+            rows.append([address, ",".join(map(str, node.applications()))])
+
+        sorted_rows = sorted(
+            rows,
+            key=operator.itemgetter(0)
+        )
+
+        print(tabulate(sorted_rows, headers, tablefmt='pipe'))
 
 

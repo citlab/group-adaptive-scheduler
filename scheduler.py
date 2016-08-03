@@ -7,6 +7,7 @@ from repeated_timer import RepeatedTimer
 from threading import Lock
 from typing import List
 import time
+import numpy as np
 
 
 class NoApplicationCanBeScheduled(BaseException):
@@ -38,6 +39,7 @@ class Scheduler(metaclass=ABCMeta):
                 rate = self.usage2rate(usage)
                 for rest, out in LeaveOneOut(len(apps)):
                     self.estimation.update_app(apps[out[0]], [apps[i] for i in rest], rate)
+        self.estimation.print()
 
     @staticmethod
     def usage2rate(usage):
@@ -55,6 +57,7 @@ class Scheduler(metaclass=ABCMeta):
                 app = self.schedule_application()
             except NoApplicationCanBeScheduled:
                 print("No Application can be scheduled right now")
+                self.cluster.print_nodes()
                 break
             app.start(self.cluster.resource_manager, self._on_app_finished)
 
@@ -63,11 +66,15 @@ class Scheduler(metaclass=ABCMeta):
         self.cluster.remove_applications(app)
         if len(self.queue) == 0 and len(self.cluster.applications()) == 0:
             self.stop()
-            delta = self.stopped_at - self.started_at
-            print("Queue took {:.0f}'{:.0f} to complete".format(delta // 60, delta % 60))
+            self.on_stop()
         else:
             self.schedule()
         self.scheduler_lock.release()
+
+    def on_stop(self):
+        delta = self.stopped_at - self.started_at
+        print("Queue took {:.0f}'{:.0f} to complete".format(delta // 60, delta % 60))
+        self.estimation.save('estimation')
 
     @abstractmethod
     def schedule_application(self) -> Application:
@@ -77,22 +84,22 @@ class Scheduler(metaclass=ABCMeta):
 class RoundRobin(Scheduler):
     def schedule_application(self):
         app = self.queue[0]
-        self.place_quarter(app)
+        self.place_empty_first(app)
         return self.queue.pop(0)
 
     def place_containers(self, app: Application):
         if app.n_containers > self.cluster.available_containers():
             raise NoApplicationCanBeScheduled
 
-        i = 0
-        while i < app.n_containers:
+        n_containers_scheduled = 0
+        while n_containers_scheduled < app.n_containers:
             for node in self.cluster.nodes.values():
                 if node.available_containers() > 0:
-                    if i < app.n_tasks:
-                        node.add_container(app.tasks[i])
-                        i += 1
+                    if n_containers_scheduled < app.n_tasks:
+                        node.add_container(app.tasks[n_containers_scheduled])
+                        n_containers_scheduled += 1
                     # add application master
-                    elif i < app.n_containers:
+                    elif n_containers_scheduled < app.n_containers:
                         node.add_container(app)
                         return
 
@@ -100,41 +107,58 @@ class RoundRobin(Scheduler):
         if app.n_containers > self.cluster.available_containers():
             raise NoApplicationCanBeScheduled
 
-        empty_nodes = list(filter(
-            lambda n: n.available_containers() == n.n_containers,
-            self.cluster.nodes.values()
-        ))
+        empty_nodes = self.cluster.empty_nodes()
 
-        i = 0
-        while len(empty_nodes) > 0 and i < app.n_containers:
-            node = empty_nodes.pop()
-            for j in range(4):
-                k = i + j
-                if k < app.n_tasks:
-                    node.add_container(app.tasks[k])
-                elif k < app.n_containers:
-                    node.add_container(app)
-                    return
-            i += 4
+        n_containers_scheduled = 0
+        while len(empty_nodes) > 0 and n_containers_scheduled < app.n_containers:
+            n_containers_scheduled += self.place(app, empty_nodes.pop())
 
         half_nodes = list(filter(
             lambda n: n.available_containers() == n.n_containers / 2,
             self.cluster.nodes.values()
         ))
 
-        while len(half_nodes) > 0 and i < app.n_containers:
-            node = half_nodes.pop()
-            for j in range(4):
-                k = i + j
-                if k < app.n_tasks:
-                    node.add_container(app.tasks[k])
-                elif k < app.n_containers:
-                    node.add_container(app)
-                    return
-            i += 4
+        while len(half_nodes) > 0 and n_containers_scheduled < app.n_containers:
+            n_containers_scheduled += self.place(app, half_nodes.pop())
+
+    @staticmethod
+    def place(app, node, n_containers=4):
+        if n_containers <= 0:
+            raise ValueError("Can not place {} containers".format(n_containers))
+        # print("Place {} on {} ({})".format(app, node, node.available_containers()))
+
+        n = len([t for t in app.tasks if t.node is not None])
+        n += 1 if app.node is not None else 0
+
+        for k in range(n, n + n_containers):
+            if k < app.n_tasks:
+                node.add_container(app.tasks[k])
+            elif k < app.n_containers:
+                node.add_container(app)
+                break
+
+        return k - n + 1
+
+    def place_empty_first(self, app: Application):
+        if app.n_containers > self.cluster.available_containers():
+            raise NoApplicationCanBeScheduled
+
+        empty_nodes = self.cluster.empty_nodes()
+
+        n_containers_scheduled = 0
+        # while len(empty_nodes) > 0 and n_containers_scheduled < app.n_containers:
+        #     n_containers_scheduled += self.place(app, empty_nodes.pop())
+
+        while n_containers_scheduled < app.n_containers:
+            nodes = [
+                n for n in self.cluster.non_full_nodes()
+                if len(n.applications()) == 0 or n.applications()[0] != app
+            ]
+            node = nodes[np.random.randint(0, len(nodes))]
+            n_containers_scheduled += self.place(app, node)
 
 
-class QueueOrder(RoundRobin):
+class Adaptive(RoundRobin):
     def __init__(self, jobs_to_peek=5, **kwargs):
         super().__init__(**kwargs)
         self.jobs_to_peek = jobs_to_peek
@@ -149,7 +173,24 @@ class QueueOrder(RoundRobin):
                 scheduled_apps,
                 [self.queue[i] for i in index]
             )
+            print("Best app is {}".format(best_i))
             if self.queue[best_i].n_containers <= available_containers:
-                self.place_quarter(self.queue[best_i])
+                self.place_application(self.queue[best_i])
                 return self.queue.pop(best_i)
-            index.remove(best_i)
+            index.pop(best_i)
+
+        raise NoApplicationCanBeScheduled
+
+    def place_application(self, app: Application):
+        empty_nodes = self.cluster.empty_nodes()
+
+        n_containers_scheduled = 0
+        while len(empty_nodes) > 0 and n_containers_scheduled < app.n_containers:
+            n_containers_scheduled += self.place(app, empty_nodes.pop())
+
+        while n_containers_scheduled < app.n_containers:
+            best_address = self.estimation.best_node_index(
+                self.cluster.node_running_apps(with_full_nodes=False),
+                app
+            )
+            n_containers_scheduled += self.place(app, self.cluster.nodes[best_address])

@@ -5,6 +5,8 @@ from typing import Dict, List
 from application import Application
 import os
 import errno
+from pprint import pprint
+from tabulate import tabulate
 
 
 class ComplementarityEstimation(metaclass=ABCMeta):
@@ -31,6 +33,10 @@ class ComplementarityEstimation(metaclass=ABCMeta):
 
     @abstractmethod
     def save(self, folder):
+        pass
+
+    @abstractmethod
+    def print(self):
         pass
 
     def indices(self, apps: List[Application]) -> List[int]:
@@ -61,7 +67,7 @@ class EpsilonGreedy(ComplementarityEstimation):
         super().__init__(recurrent_apps)
         self.epsilon = epsilon
         self.average = np.full(self.shape, float(initial_average))
-        self.update_count = np.ones(self.shape)
+        self.update_count = np.full(self.shape, 0 if initial_average == 0 else 1)
 
     def update_app(self, app, concurrent_apps, rate):
         ix = np.ix_(self.indices(app), self.indices(concurrent_apps))
@@ -70,8 +76,15 @@ class EpsilonGreedy(ComplementarityEstimation):
         self.average[ix] += (rate - self.average[ix]) / self.update_count[ix]
 
     def best_app_index(self, scheduled_apps, apps):
+        if len(scheduled_apps) == 0:
+            return 0
+
         rates = self.expected_rates(scheduled_apps, apps)
-        ix = np.argsort(rates)
+
+        if np.unique(rates).size == 1:
+            ix = list(range(len(apps)))[::-1]
+        else:
+            ix = np.argsort(rates)
 
         return self.__greedy(ix)
 
@@ -94,13 +107,24 @@ class EpsilonGreedy(ComplementarityEstimation):
             ),
             key=operator.itemgetter(1)
         )
-        sorted_nodes = list(map(operator.itemgetter(0), sorted_nodes_apps))
+        rates = list(map(operator.itemgetter(1), sorted_nodes_apps))
+        if np.unique(rates).size == 1:
+            return nodes_apps.keys()[0]
 
-        return self.__greedy(sorted_nodes)
+        sorted_addresses = list(map(operator.itemgetter(0), sorted_nodes_apps))
+        return self.__greedy(sorted_addresses)
 
     def save(self, folder):
         self._save(folder, "average", self.average)
         self._save(folder, "ucount", self.update_count)
+
+    def print(self):
+        rows = []
+        headers = ["Preferences"] + list(self.reverse_index.values())
+        for i, name in self.reverse_index.items():
+            rows.append([name] + self.average[i].tolist())
+
+        print(tabulate(rows, headers, tablefmt='pipe'))
 
 
 class Gradient(ComplementarityEstimation):
@@ -108,7 +132,7 @@ class Gradient(ComplementarityEstimation):
         super().__init__(recurrent_apps)
         self.alpha = alpha
         self.average = np.full(self.shape[0], float(initial_average))
-        self.update_count = np.ones(self.shape[0])
+        self.update_count = np.full(self.shape[0], 0 if initial_average == 0 else 1)
         self.preferences = np.zeros(self.shape)
 
     def update_app(self, app, concurrent_apps, rate):
@@ -136,6 +160,8 @@ class Gradient(ComplementarityEstimation):
         return exp[:, concurrent_apps_index] / exp.sum()
 
     def best_app_index(self, scheduled_apps, apps):
+        if len(scheduled_apps) == 0:
+            return 0
         p = self.normalized_action_probabilities(scheduled_apps, apps)
         return self.__choose(np.arange(len(apps)), p=p)
 
@@ -163,5 +189,16 @@ class Gradient(ComplementarityEstimation):
         self._save(folder, "average", self.average)
         self._save(folder, "preferences", self.preferences)
         self._save(folder, "ucount", self.update_count)
+
+    def print(self):
+        apps_name = list(self.reverse_index.values())
+        print(tabulate([["Average"] + self.average.tolist()], apps_name, tablefmt='pipe'))
+
+        rows = []
+        headers = ["Preferences"] + apps_name
+        for i, name in self.reverse_index.items():
+            rows.append([name] + self.preferences[i].tolist())
+
+        print(tabulate(rows, headers, tablefmt='pipe'))
 
 

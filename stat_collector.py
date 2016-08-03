@@ -13,6 +13,9 @@ class Server:
     def __init__(self, address):
         self.address = address
 
+    def __str__(self):
+        return self.address
+
 
 class StatCollector(metaclass=ABCMeta):
     @abstractmethod
@@ -45,7 +48,7 @@ class InfluxDB(StatCollector):
         results = {}
         for address, server in servers.items():
             results[address] = [
-                cpu[address],
+                cpu[address] / 100,
                 disk[address] / server.disk_max,
                 net[address] / server.net_max,
             ]
@@ -129,9 +132,10 @@ class InfluxDB(StatCollector):
         points_sum = 0
         n = 0
         for p in points:
-            n += 1
-            points_sum += min(p[key], p_max)
-            if p[key] > p_max:
-                print("/!\\ Max for {} exceed by {:.2%}".format(key, p[key] / p_max))
+            if p[key] is not None:
+                n += 1
+                points_sum += min(p[key], p_max)
+                if p[key] > p_max:
+                    print("/!\\ Max for {} exceed by {:.2%}".format(key, p[key] / p_max))
 
         return points_sum / n

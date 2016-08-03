@@ -92,7 +92,7 @@ class TestFlinkApplication:
             "jar",
             "arg1",
             "TEMP",
-            "1> {}.log".format(app.id)
+            "1> apps_log/{}.log".format(app.id)
         ]
         cmd = app.command_line()
         for i in range(10):

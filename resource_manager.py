@@ -72,7 +72,6 @@ class Yarn(YarnResourceManager, ResourceManager):
 
     def is_application_running(self, application_id):
         self.lock.acquire()
-
         try:
             output = self.cluster_application(application_id).data['app']['state'] == "RUNNING"
         except BaseException as e:

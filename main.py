@@ -3,6 +3,7 @@ import sys
 import generator
 import scheduler
 import complementarity
+from application import Application
 
 
 def run(args):
@@ -15,10 +16,8 @@ def run(args):
         jobs_xml_str=args.jobs_xml.read(),
         config_yaml=args.config_yaml
     )
+    Application.print_command_line = args.pcmd
     s.start()
-
-    if args.estimation_folder is not None:
-        s.estimation.save(args.estimation_folder)
 
 
 def gen(args):
@@ -67,7 +66,7 @@ parser_run.add_argument(
     nargs="?",
     help="scheduling strategy",
     default="RoundRobin",
-    choices=["RoundRobin", "QueueOrder"]
+    choices=["RoundRobin", "Adaptive"]
 )
 
 parser_run.add_argument(
@@ -86,7 +85,13 @@ parser_run.add_argument(
     type=str,
     nargs="?",
     help="estimation data folder",
-    default=None
+    default="estimation"
+)
+
+parser_run.add_argument(
+    "--pcmd",
+    help="Print or not command lines",
+    action='store_true'
 )
 
 parser_gen.add_argument(
