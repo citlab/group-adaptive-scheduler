@@ -4,6 +4,8 @@ import resource_manager
 from cluster import Cluster
 import numpy as np
 from yarn_workloader import Jobs, Experiment
+import complementarity
+from scheduler import EstimationBenchmark
 
 
 def cluster(yaml_source):
@@ -19,7 +21,11 @@ def cluster(yaml_source):
     stat_collector.Server.disk_name = config['server']['disk_name']
     stat_collector.Server.net_interface = config['server']['net_interface']
 
-    return Cluster(rm, stat)
+    return Cluster(
+        resource_manager=rm,
+        stat_collector=stat,
+        node_containers=config['server'].get('containers', None)
+    )
 
 
 def experiment(jobs_xml_str, n_jobs):
@@ -45,6 +51,24 @@ def scheduler(scheduler_class, estimation_class, exp_xml_str, jobs_xml_str, conf
 
     _scheduler = scheduler_class(
         estimation=estimation_class(jobs.applications(), **({} if estimation_kwargs is None else estimation_kwargs)),
+        cluster=cluster(config_yaml)
+    )
+    _scheduler.add_all(exp.applications)
+
+    return _scheduler
+
+
+def estimations_bench(exp_xml_str, jobs_xml_str, config_yaml):
+    jobs = Jobs()
+    jobs.read(jobs_xml_str)
+    exp = Experiment()
+    exp.read(exp_xml_str, jobs)
+
+    _scheduler = EstimationBenchmark(
+        estimations=[
+            complementarity.Gradient(jobs.applications()),
+            complementarity.EpsilonGreedy(jobs.applications())
+        ],
         cluster=cluster(config_yaml)
     )
     _scheduler.add_all(exp.applications)

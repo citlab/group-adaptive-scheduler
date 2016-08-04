@@ -13,8 +13,8 @@ class TestApplication:
 
     def test_start(self):
         app = DummyApplication()
-        for task in app.tasks:
-            task.node = Node("N", 8)
+        for container in app.containers:
+            container.node = Node("N", 8)
         rm = DummyRM(apps_running={"A1": True})
         a = []
 
@@ -62,9 +62,9 @@ class TestFlinkApplication:
         app.id = "flink"
 
         nodes = []
-        for i, task in enumerate(app.tasks):
+        for i, container in enumerate(app.containers):
             node = Node("N{}".format(i), 8)
-            task.node = node
+            container.node = node
             nodes.append(node)
 
         app.node = Node("N_APP_M", 8)
@@ -86,7 +86,7 @@ class TestFlinkApplication:
             "-m yarn-cluster",
             "-ynm {}".format(app.name),
             "-yn 8",
-            "-yD fix.container.hosts=" + ",".join(app.tasks_hosts()) + "@@fix.am.host=N_APP_M",
+            "-yD fix.container.hosts=" + ",".join(app.tasks_hosts()),
             "-ytm 1536",
             "-c JarClassK",
             "jar",

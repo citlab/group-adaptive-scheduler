@@ -20,7 +20,8 @@ class ComplementarityEstimation(metaclass=ABCMeta):
             self.reverse_index[i] = app.name
 
     @abstractmethod
-    def best_app_index(self, scheduled_apps: List[Application], apps: List[Application]) -> int:
+    def best_app_index(self, scheduled_apps: List[Application], apps: List[Application],
+                       scheduled_apps_weight: np.ndarray = None) -> int:
         pass
 
     @abstractmethod
@@ -38,6 +39,9 @@ class ComplementarityEstimation(metaclass=ABCMeta):
     @abstractmethod
     def print(self):
         pass
+
+    def __str__(self):
+        return type(self).__name__
 
     def indices(self, apps: List[Application]) -> List[int]:
         if isinstance(apps, Application):
@@ -67,7 +71,7 @@ class EpsilonGreedy(ComplementarityEstimation):
         super().__init__(recurrent_apps)
         self.epsilon = epsilon
         self.average = np.full(self.shape, float(initial_average))
-        self.update_count = np.full(self.shape, 0 if initial_average == 0 else 1)
+        self.update_count = np.full(self.shape, 0 if initial_average == 0 else 1, dtype=np.int64)
 
     def update_app(self, app, concurrent_apps, rate):
         ix = np.ix_(self.indices(app), self.indices(concurrent_apps))
@@ -75,7 +79,7 @@ class EpsilonGreedy(ComplementarityEstimation):
         self.update_count[ix] += 1
         self.average[ix] += (rate - self.average[ix]) / self.update_count[ix]
 
-    def best_app_index(self, scheduled_apps, apps):
+    def best_app_index(self, scheduled_apps, apps, scheduled_apps_weight=None):
         if len(scheduled_apps) == 0:
             return 0
 
@@ -88,11 +92,15 @@ class EpsilonGreedy(ComplementarityEstimation):
 
         return self.__greedy(ix)
 
-    def expected_rates(self, apps, apps_to_schedule):
-        return self.average[np.ix_(
+    def expected_rates(self, apps, apps_to_schedule, apps_weight=None):
+        avg = self.average[np.ix_(
             self.indices(apps),
             self.indices(apps_to_schedule)
-        )].sum(axis=0)
+        )]
+        if apps_weight is not None:
+            avg = (avg.T * apps_weight).T
+
+        return avg.sum(axis=0)
 
     def __greedy(self, items):
         if np.random.uniform() < self.epsilon:
@@ -128,11 +136,11 @@ class EpsilonGreedy(ComplementarityEstimation):
 
 
 class Gradient(ComplementarityEstimation):
-    def __init__(self, recurrent_apps, alpha=0.01, initial_average=1.5):
+    def __init__(self, recurrent_apps, alpha=0.01, initial_average=0):
         super().__init__(recurrent_apps)
         self.alpha = alpha
         self.average = np.full(self.shape[0], float(initial_average))
-        self.update_count = np.full(self.shape[0], 0 if initial_average == 0 else 1)
+        self.update_count = np.full(self.shape[0], 0 if initial_average == 0 else 1, dtype=np.int64)
         self.preferences = np.zeros(self.shape)
 
     def update_app(self, app, concurrent_apps, rate):
@@ -157,16 +165,21 @@ class Gradient(ComplementarityEstimation):
     def __action_probabilities(self, apps_index, concurrent_apps_index):
         exp = np.exp(self.preferences[apps_index])
 
-        return exp[:, concurrent_apps_index] / exp.sum()
+        return (exp[:, concurrent_apps_index].T / exp.sum(axis=1)).T
 
-    def best_app_index(self, scheduled_apps, apps):
+    def best_app_index(self, scheduled_apps, apps, scheduled_apps_weight=None):
         if len(scheduled_apps) == 0:
-            return 0
-        p = self.normalized_action_probabilities(scheduled_apps, apps)
-        return self.__choose(np.arange(len(apps)), p=p)
+            return np.random.randint(0, len(apps))
+        return self.__choose(
+            np.arange(len(apps)),
+            self.normalized_action_probabilities(scheduled_apps, apps, scheduled_apps_weight)
+        )
 
-    def normalized_action_probabilities(self, apps, apps_to_schedule):
-        p = self.__action_probabilities(self.indices(apps), self.indices(apps_to_schedule)).sum(axis=0)
+    def normalized_action_probabilities(self, apps, apps_to_schedule, apps_weight=None):
+        p = self.__action_probabilities(self.indices(apps), self.indices(apps_to_schedule))
+        if apps_weight is not None:
+            p = (p.T * apps_weight).T
+        p = p.sum(axis=0)
         return p / p.sum()
 
     @staticmethod
@@ -181,9 +194,8 @@ class Gradient(ComplementarityEstimation):
         for i, (node_name, apps) in enumerate(nodes_apps.items()):
             p[i] = self.normalized_action_probabilities(apps, app_to_schedule)
             nodes.append(node_name)
-        p /= p.sum()
 
-        return self.__choose(nodes, p)
+        return self.__choose(nodes, p / p.sum())
 
     def save(self, folder):
         self._save(folder, "average", self.average)

@@ -1,8 +1,7 @@
-from stat_collector import StatCollector, Server
+from stat_collector import StatCollector, Server, Usage
 from resource_manager import ResourceManager
 from application import Application, Container
 from typing import List, Tuple
-import numpy as np
 from tabulate import tabulate
 import operator
 
@@ -32,12 +31,13 @@ class Node(Server):
                 staying_containers.append(container)
         self.containers = staying_containers
 
-    def applications(self):
+    def applications(self, by_name=False, is_running=False):
         apps = {}
 
         for container in self.containers:
-            if not container.is_negligible:
-                apps[container.application.id] = container.application
+            if not container.is_negligible and (container.application.is_running or not is_running):
+                key = getattr(container.application, 'name' if by_name else 'id')
+                apps[key] = container.application
 
         return list(apps.values())
 
@@ -49,15 +49,15 @@ class Node(Server):
 
 
 class Cluster:
-    def __init__(self, resource_manager: ResourceManager, stat_collector: StatCollector):
+    def __init__(self, resource_manager: ResourceManager, stat_collector: StatCollector, node_containers=None):
         self.resource_manager = resource_manager
         self.stat_collector = stat_collector
         self.nodes = {}
 
         for address, n_containers in self.resource_manager.nodes().items():
-            self.nodes[address] = Node(address, n_containers)
+            self.nodes[address] = Node(address, n_containers if node_containers is None else node_containers)
 
-    def apps_usage(self) -> List[Tuple[List[Application], np.ndarray]]:
+    def apps_usage(self) -> List[Tuple[List[Application], Usage]]:
         mean_usage = self.stat_collector.mean_usage(self.nodes)
         nodes_applications = self.node_running_apps()
         
@@ -80,25 +80,30 @@ class Cluster:
 
         for address, node in self.nodes.items():
             if with_full_nodes or node.available_containers() > 0:
-                apps[address] = [app for app in node.applications() if app.is_running]
+                apps[address] = node.applications(is_running=True)
             
         return apps
 
     def available_containers(self):
         return sum(n.available_containers() for n in self.nodes.values())
 
-    def applications(self):
-        apps = []
+    def applications(self, with_full_nodes=True, by_name=False):
+        apps = {}
         for node in self.nodes.values():
-            apps += node.applications()
-        return set(apps)
+            if node.available_containers() > 0 or with_full_nodes:
+                for app in node.applications(by_name=by_name, is_running=True):
+                    key = getattr(app, 'name' if by_name else 'id')
+                    if key in apps:
+                        apps[key][1] += 1
+                    else:
+                        apps[key] = [app, 1]
+        return zip(*apps.values()) if len(apps) > 0 else ([], [])
 
-    def non_full_node_applications(self):
-        apps = []
+    def has_application_scheduled(self):
         for node in self.nodes.values():
-            if node.available_containers() > 0:
-                apps += node.applications()
-        return set(apps)
+            if len(node.applications()) > 0:
+                return True
+        return False
 
     def remove_applications(self, application: Application):
         for node in self.nodes.values():

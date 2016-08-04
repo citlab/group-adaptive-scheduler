@@ -15,7 +15,7 @@ class TestIncrementalEstimation:
 
         estimation.update_app(jobs[0], jobs[[1, 2]], 5)
         expected_data = np.array([
-            [1, 5, 5],
+            [1, 3, 3],
             [1, 1, 1],
             [1, 1, 1]
         ])
@@ -24,7 +24,7 @@ class TestIncrementalEstimation:
 
         estimation.update_app(jobs[0], jobs[[1, 2]], 7)
         expected_data = np.array([
-            [1, 6, 6],
+            [1, 13/3, 13/3],
             [1, 1, 1],
             [1, 1, 1]
         ])

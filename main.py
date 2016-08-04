@@ -25,6 +25,14 @@ def gen(args):
     args.output.write(exp.to_xml())
 
 
+def estimation_bench(args):
+    s = generator.estimations_bench(
+        exp_xml_str=args.experiment_xml.read(),
+        jobs_xml_str=args.jobs_xml.read(),
+        config_yaml=args.config_yaml
+    )
+    s.start()
+
 parser = argparse.ArgumentParser(
     prog="pyScheduler",
     description="Schedule Application on a Cluster"
@@ -32,9 +40,12 @@ parser = argparse.ArgumentParser(
 subparsers = parser.add_subparsers()
 parser_run = subparsers.add_parser("run", help="Run an experiment")
 parser_run.set_defaults(func=run)
+parser_estimations = subparsers.add_parser("estimations", help="Print the different estimations for an experiment")
+parser_estimations.set_defaults(func=estimation_bench)
 parser_gen = subparsers.add_parser("gen", help="Generate an experiment from jobs list")
 parser_gen.set_defaults(func=gen)
 
+# RUN
 parser_run.add_argument(
     "config_yaml",
     metavar="config.yaml",
@@ -66,7 +77,7 @@ parser_run.add_argument(
     nargs="?",
     help="scheduling strategy",
     default="RoundRobin",
-    choices=["RoundRobin", "Adaptive"]
+    choices=["RoundRobin", "Adaptive", "Random"]
 )
 
 parser_run.add_argument(
@@ -75,7 +86,7 @@ parser_run.add_argument(
     type=str,
     nargs="?",
     help="complementarity estimation strategy",
-    default="EpsilonGreedy",
+    default="Gradient",
     choices=["EpsilonGreedy", "Gradient"]
 )
 
@@ -94,6 +105,32 @@ parser_run.add_argument(
     action='store_true'
 )
 
+# ESTIMATION BENCH
+parser_estimations.add_argument(
+    "config_yaml",
+    metavar="config.yaml",
+    type=argparse.FileType('r'),
+    nargs="?",
+    help="path to the config.yaml"
+)
+
+parser_estimations.add_argument(
+    "jobs_xml",
+    metavar="jobs.xml",
+    type=argparse.FileType('r'),
+    nargs="?",
+    help="path to the jobs.xml"
+)
+
+parser_estimations.add_argument(
+    "experiment_xml",
+    metavar="exp.xml",
+    type=argparse.FileType('r'),
+    nargs="?",
+    help="path to the experiment.xml"
+)
+
+# GEN
 parser_gen.add_argument(
     "jobs_xml",
     metavar="jobs.xml",

@@ -39,7 +39,8 @@ class Application(Container):
         self.tasks = [Task(self) for i in range(self.n_tasks)]
         self.thread = None
         self.is_negligible = True
-        self.n_containers = self.n_tasks + 1
+        self.n_containers = self.n_tasks
+        self.containers = self.tasks
 
     @property
     def application(self):
