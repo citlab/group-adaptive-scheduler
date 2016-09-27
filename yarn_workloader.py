@@ -79,7 +79,9 @@ class Experiment:
         self.applications = []
 
         for job in experiment.iter('job'):
-            self.applications.append(jobs[job.get('name')])
+            app = jobs[job.get('name')]
+            app.data_set = job.get('dataset', '')
+            self.applications.append(app)
 
     def to_xml(self):
         suite = ET.Element('suite')
@@ -88,5 +90,7 @@ class Experiment:
         for job in self.applications:
             j = ET.SubElement(experiment, 'job')
             j.set('name', job.name)
+            if job.data_set:
+                j.set('dataset', job.data_set)
             j.text = '0'
         return minidom.parseString(ET.tostring(suite, 'utf-8')).toprettyxml(indent="   ")

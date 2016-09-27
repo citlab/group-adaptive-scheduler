@@ -17,6 +17,10 @@ def run(args):
         config_yaml=args.config_yaml
     )
     Application.print_command_line = args.pcmd
+
+    if args.estimation_parameters is not None:
+        s.estimation.load(args.estimation_parameters)
+
     s.start()
 
 
@@ -88,6 +92,14 @@ parser_run.add_argument(
     help="complementarity estimation strategy",
     default="Gradient",
     choices=["EpsilonGreedy", "Gradient"]
+)
+
+parser_run.add_argument(
+    "-ep",
+    dest="estimation_parameters",
+    type=str,
+    nargs="?",
+    help="complementarity estimation parameters folder",
 )
 
 parser_run.add_argument(

@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <suite>
    <experiment name="tpch-coco">
-      <job name="tpch-1-full">0</job>
+      <job dataset="5" name="tpch-1-full">0</job>
       <job name="tpch-1">0</job>
       <job name="tpch-1-full">0</job>
    </experiment>

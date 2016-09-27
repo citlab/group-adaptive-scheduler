@@ -68,16 +68,6 @@ class Scheduler(metaclass=ABCMeta):
 
         return app
 
-    def get_application_to_schedule(self) -> Application:
-        app = self.queue[0]
-        if app.n_containers > self.cluster.available_containers():
-            raise NoApplicationCanBeScheduled
-        return self.queue.pop(0)
-
-    @abstractmethod
-    def place_containers(self, app: Application):
-        pass
-
     def _on_app_finished(self, app: Application):
         self.scheduler_lock.acquire()
         self.cluster.remove_applications(app)
@@ -93,6 +83,27 @@ class Scheduler(metaclass=ABCMeta):
         print("Queue took {:.0f}'{:.0f} to complete".format(delta // 60, delta % 60))
         self.estimation.save('estimation')
 
+    def get_application_to_schedule(self) -> Application:
+        app = self.queue[0]
+        if app.n_containers > self.cluster.available_containers():
+            raise NoApplicationCanBeScheduled
+        return self.queue.pop(0)
+
+    @abstractmethod
+    def place_containers(self, app: Application):
+        pass
+
+    def _place_random(self, app: Application, n_containers=3):
+        nodes = self.cluster.non_full_nodes()
+        good_nodes = [
+            n for n in nodes
+            if len(n.applications()) == 0 or n.applications()[0] != app
+        ]
+        if len(good_nodes) == 0:
+            good_nodes = nodes
+        node = good_nodes[np.random.randint(0, len(good_nodes))]
+        return self._place(app, node, n_containers)
+
     @staticmethod
     def _place(app: Application, node: Node, n_containers=3):
         if n_containers <= 0:
@@ -107,17 +118,6 @@ class Scheduler(metaclass=ABCMeta):
                 node.add_container(app.containers[k])
 
         return k - n + 1
-
-    def _place_random(self, app: Application, n_containers=3):
-        nodes = self.cluster.non_full_nodes()
-        good_nodes = [
-            n for n in nodes
-            if len(n.applications()) == 0 or n.applications()[0] != app
-        ]
-        if len(good_nodes) == 0:
-            good_nodes = nodes
-        node = good_nodes[np.random.randint(0, len(good_nodes))]
-        return self._place(app, node, n_containers)
 
 
 class Random(Scheduler):

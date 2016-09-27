@@ -50,15 +50,19 @@ class TestExperiment:
             exp = Experiment(exp_xml, jobs_xml=jobs_xml)
 
         assert exp.name == "tpch-coco"
-        assert exp.applications[0].is_a_copy_of(TestJobs.expected_apps['tpch-1-full'])
+        app0 = TestJobs.expected_apps['tpch-1-full'].copy()
+        app0.data_set = '5'
+        assert exp.applications[0].is_a_copy_of(app0)
         assert exp.applications[1].is_a_copy_of(TestJobs.expected_apps['tpch-1'])
         assert exp.applications[2].is_a_copy_of(TestJobs.expected_apps['tpch-1-full'])
 
     def test_to_xml(self):
+        app0 = TestJobs.expected_apps['tpch-1-full'].copy()
+        app0.data_set = '5'
         exp = Experiment(
             name="tpch-coco",
             applications=[
-                TestJobs.expected_apps['tpch-1-full'].copy(),
+                app0,
                 TestJobs.expected_apps['tpch-1'].copy(),
                 TestJobs.expected_apps['tpch-1-full'].copy(),
             ]

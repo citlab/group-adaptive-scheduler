@@ -15,7 +15,7 @@ class ComplementarityEstimation(metaclass=ABCMeta):
         self.apps = recurrent_apps
         self.index = {}
         self.reverse_index = {}
-        for i, app in enumerate(recurrent_apps):
+        for i, app in enumerate(sorted(recurrent_apps, key=lambda a: a.name)):
             self.index[app.name] = i
             self.reverse_index[i] = app.name
 
@@ -34,6 +34,10 @@ class ComplementarityEstimation(metaclass=ABCMeta):
 
     @abstractmethod
     def save(self, folder):
+        pass
+
+    @abstractmethod
+    def load(self, folder):
         pass
 
     @abstractmethod
@@ -126,6 +130,10 @@ class EpsilonGreedy(ComplementarityEstimation):
         self._save(folder, "average", self.average)
         self._save(folder, "ucount", self.update_count)
 
+    def load(self, folder):
+        self.average = np.load("{}/average.npy".format(folder))
+        self.update_count = np.load("{}/ucount.npy".format(folder))
+
     def print(self):
         rows = []
         headers = ["Preferences"] + list(self.reverse_index.values())
@@ -202,9 +210,21 @@ class Gradient(ComplementarityEstimation):
         self._save(folder, "preferences", self.preferences)
         self._save(folder, "ucount", self.update_count)
 
+    def load(self, folder):
+        self.average = np.load("{}/average.npy".format(folder))
+        self.update_count = np.load("{}/ucount.npy".format(folder))
+        self.preferences = np.load("{}/preferences.npy".format(folder))
+
     def print(self):
         apps_name = list(self.reverse_index.values())
-        print(tabulate([["Average"] + self.average.tolist()], apps_name, tablefmt='pipe'))
+        print(tabulate(
+            [
+                ["Average"] + self.average.tolist(),
+                ["Count"] + self.update_count.tolist(),
+            ],
+            apps_name,
+            tablefmt='pipe'
+        ))
 
         rows = []
         headers = ["Preferences"] + apps_name

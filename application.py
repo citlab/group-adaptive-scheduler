@@ -16,6 +16,9 @@ class Container(metaclass=ABCMeta):
         self.container_id = None
         self.node = None
         self.pid = None
+        # used to distinguish between the application master and the tasks container
+        # the application master is considered to be negligible as it does not have
+        # much influence on the resource usage
         self.is_negligible = False
 
     @property
@@ -30,7 +33,7 @@ class Container(metaclass=ABCMeta):
 class Application(Container):
     print_command_line = False
 
-    def __init__(self, name, n_tasks):
+    def __init__(self, name, n_tasks, data_set=''):
         super().__init__()
         self.name = name
         self.n_tasks = n_tasks
@@ -41,13 +44,14 @@ class Application(Container):
         self.is_negligible = True
         self.n_containers = self.n_tasks
         self.containers = self.tasks
+        self.data_set = data_set
 
     @property
     def application(self):
         return self
 
     def __str__(self):
-        return "{} ({})".format(self.id, self.name)
+        return "{} ({}) [{}]".format(self.id, self.name, self.data_set)
 
     def start(self, resource_manager: ResourceManager, on_finish=None, sleep_during_loop=5):
         self.id = resource_manager.next_application_id()
@@ -83,10 +87,11 @@ class Application(Container):
             on_finish(self)
 
     def copy(self):
-        return Application(self.name, len(self.tasks))
+        return Application(self.name, len(self.tasks), data_set=self.data_set)
 
     def is_a_copy_of(self, application):
-        return application.name == self.name and len(self.tasks) == len(application.tasks)
+        return application.name == self.name and len(self.tasks) == len(application.tasks) \
+               and self.data_set == application.data_set
 
 
 class Task(Container):
@@ -100,8 +105,8 @@ class Task(Container):
 
 
 class DummyApplication(Application):
-    def __init__(self, name="app", n_tasks=8, id="id", is_running=False):
-        super().__init__(name, n_tasks)
+    def __init__(self, name="app", n_tasks=8, id="id", is_running=False, data_set='1'):
+        super().__init__(name, n_tasks, data_set=data_set)
         self.id = id
         self.is_running = is_running
 
@@ -110,8 +115,8 @@ class DummyApplication(Application):
 
 
 class FlinkApplication(Application):
-    def __init__(self, name, n_task, jar, args, jar_class=None, tm=None):
-        super().__init__(name, n_task)
+    def __init__(self, name, n_task, jar, args, jar_class=None, tm=None, **kwargs):
+        super().__init__(name, n_task, **kwargs)
         self.jar = jar
         self.jar_class = jar_class
         self.tm = tm
@@ -122,7 +127,7 @@ class FlinkApplication(Application):
             "$FLINK_HOME/bin/flink",
             "run",
             "-m yarn-cluster",
-            "-ynm " + self.name,
+            "-ynm {}_{}".format(self.name, self.data_set),
             "-yn {}".format(len(self.tasks)),
             "-yD fix.container.hosts={tasks_host}".format(
                 tasks_host=",".join(self.tasks_hosts()),
@@ -142,6 +147,8 @@ class FlinkApplication(Application):
         for arg in self.args:
             if "TEMP" in arg:
                 cmd.append(arg.replace('TEMP', 'hdfs:///tmp/' + str(uuid.uuid4()).replace('-', '')))
+            elif 'DATASET' in arg:
+                cmd.append(arg.replace('DATASET', self.data_set))
             else:
                 cmd.append(arg)
 
@@ -157,7 +164,15 @@ class FlinkApplication(Application):
         return hosts
 
     def copy(self):
-        return FlinkApplication(self.name, len(self.tasks), self.jar, self.args, jar_class=self.jar_class, tm=self.tm)
+        return FlinkApplication(
+            self.name,
+            len(self.tasks),
+            self.jar,
+            self.args,
+            jar_class=self.jar_class,
+            tm=self.tm,
+            data_set=self.data_set
+        )
 
     def is_a_copy_of(self, application):
         return super().is_a_copy_of(application) and self.jar == application.jar \

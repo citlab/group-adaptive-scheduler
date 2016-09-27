@@ -42,11 +42,13 @@ class TestApplication:
         app2 = DummyApplication(is_running=True)
         app3 = DummyApplication(name="app3")
         app4 = DummyApplication(n_tasks=7)
+        app5 = DummyApplication(data_set='2')
 
         assert app1.is_a_copy_of(app)
         assert app2.is_a_copy_of(app)
         assert not app3.is_a_copy_of(app)
         assert not app4.is_a_copy_of(app)
+        assert not app5.is_a_copy_of(app)
 
     def test_copy(self):
         app = DummyApplication()
@@ -84,7 +86,7 @@ class TestFlinkApplication:
             "$FLINK_HOME/bin/flink",
             "run",
             "-m yarn-cluster",
-            "-ynm {}".format(app.name),
+            "-ynm {}_{}".format(app.name, app.data_set),
             "-yn 8",
             "-yD fix.container.hosts=" + ",".join(app.tasks_hosts()),
             "-ytm 1536",
