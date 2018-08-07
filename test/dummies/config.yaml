@@ -5,17 +5,18 @@ server:
   net_interface: net
 
 resource_manager:
-  type: DummyRM
+  type: Yarn
   kwargs:
-    n_nodes: 3
-    n_containers: 20
-    node_pattern: NN{}
-    app_pattern: AA{}
-    apps_running:
-      test: yes
-    apps_submitted: 2
-    apps_finished:
-      test: yes
+    address: wally075
+#    n_nodes: 3
+#    n_containers: 20
+#    node_pattern: NN{}
+#    app_pattern: AA{}
+#    apps_running:
+#      test: yes
+#    apps_submitted: 2
+#    apps_finished:
+#      test: yes
 
 stat_collector:
   type: DummyStatCollector
