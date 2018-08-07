@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <suite>
    <experiment name="simpleTest">
-      <job name="connectedComponents">0</job>
+      <job name="kMeans">0</job>
       <job name="enumTriangles">0</job>
    </experiment>
 </suite>

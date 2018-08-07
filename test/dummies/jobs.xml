@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <jobs>
-    <job name="connectedComponents">
+    <job name="kMeans">
         <runner>
             <name>flink</name>
             <arguments>
@@ -9,7 +9,7 @@
             </arguments>
         </runner>
         <jar>
-            <path>/data/vinh.tran/flink/examples/batch/ConnectedComponents.jar</path>
+            <path>/data/vinh.tran/flink/examples/batch/KMeans.jar</path>
             <arguments>
             </arguments>
         </jar>
