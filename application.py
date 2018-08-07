@@ -75,6 +75,7 @@ class Application(Container):
             print("Start {} with cmd: {}".format(self.id, cmd))
         subprocess.Popen(cmd, shell=True)
 
+        time.sleep(sleep_during_loop)
         while not resource_manager.is_application_finished(self.id):
             if not self.is_running and resource_manager.is_application_running(self.id):
                 self.is_running = True
