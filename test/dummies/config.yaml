@@ -7,13 +7,13 @@ server:
 resource_manager:
   type: DummyRM
   kwargs:
-    n_nodes: 5
-    n_containers: 7
+    n_nodes: 3
+    n_containers: 20
     node_pattern: NN{}
     app_pattern: AA{}
     apps_running:
       test: yes
-    apps_submitted: 2
+    apps_submitted: 1
     apps_finished:
       test: yes
 
