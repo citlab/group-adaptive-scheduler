@@ -85,12 +85,12 @@ class Yarn(YarnResourceManager, ResourceManager):
         self.lock.acquire()
 
         try:
-            output = self.cluster_application(application_id).data['app']['state'] == "FINISHED"
+            output = self.cluster_application(application_id).data['app']['state'] == "FINISHED" or \
+                     self.cluster_application(application_id).data['app']['state'] is None
+
         except BaseException as e:
             print(e)
             output = False
 
         self.lock.release()
         return output
-
-
