@@ -14,4 +14,18 @@
             </arguments>
         </jar>
     </job>
+    <job name="enumTriangles">
+        <runner>
+            <name>flink</name>
+            <arguments>
+                <argument name="m">yarn-cluster</argument>
+                <argument name="yn">20</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/flink/examples/batch/EnumTriangles.jar</path>
+            <arguments>
+            </arguments>
+        </jar>
+    </job>
 </jobs>
