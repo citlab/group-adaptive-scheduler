@@ -11,6 +11,7 @@ class Node(Server):
         super().__init__(address)
         self.n_containers = n_containers
         self.containers = []
+        print("Init new node: {} - container number: {}".format(address, n_containers))
 
     def add_container(self, container: Container):
         if self.available_containers() < 1:
