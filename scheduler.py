@@ -116,6 +116,7 @@ class Scheduler(metaclass=ABCMeta):
         for k in range(n, n + n_containers):
             if k < app.n_containers:
                 node.add_container(app.containers[k])
+                print("Place a task of {} on node {}".format(app, node))
 
         return k - n + 1
 
@@ -155,6 +156,7 @@ class RoundRobin(Scheduler):
         empty_nodes = self.cluster.empty_nodes()
 
         n_containers_scheduled = 0
+        print("App {} requires {} containers".format(app, app.n_containers))
         while len(empty_nodes) > 0 and n_containers_scheduled < app.n_containers:
             n_containers_scheduled += self._place(app, empty_nodes.pop())
 
