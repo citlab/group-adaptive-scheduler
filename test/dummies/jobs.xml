@@ -5,12 +5,16 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">2</argument>
+                <argument name="yn">12</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/flink/examples/batch/KMeans.jar</path>
             <arguments>
+                <argument>/data/vinh.tran/jobData/kMeans/points</argument>
+                <argument>/data/vinh.tran/jobData/kMeans/centers</argument>
+                <argument>/data/vinh.tran/scheduling-recurring-applications/output/kMeans</argument>
+                <argument>30</argument>
             </arguments>
         </jar>
     </job>
@@ -19,7 +23,7 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">2</argument>
+                <argument name="yn">4</argument>
             </arguments>
         </runner>
         <jar>
