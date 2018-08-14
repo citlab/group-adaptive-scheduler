@@ -8,8 +8,11 @@ resource_manager:
   type: Yarn
   kwargs:
     address: wally075
+
+#  type: DummyRM
+#  kwargs:
 #    n_nodes: 3
-#    n_containers: 20
+#    n_containers: 4
 #    node_pattern: NN{}
 #    app_pattern: AA{}
 #    apps_running:
