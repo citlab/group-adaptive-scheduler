@@ -49,5 +49,23 @@
             </arguments>
         </jar>
     </job>
+    <job name="tpch3">
+        <runner>
+            <name>flink</name>
+            <arguments>
+                <argument name="m">yarn-cluster</argument>
+                <argument name="yn">3</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/jobData/TPCH3.jar</path>
+            <arguments>
+                <argument name="--customer">hdfs:///user/vinh.tran/tpch3small/customer.csv</argument>
+                <argument name="--lineitem">hdfs:///user/vinh.tran/tpch3small/lineitem.csv</argument>
+                <argument name="--nation">hdfs:///user/vinh.tran/tpch3small/nation.csv</argument>
+                <argument name="--orders">hdfs:///user/vinh.tran/tpch3small/orders.csv</argument>
+            </arguments>
+        </jar>
+    </job>
 
 </jobs>
