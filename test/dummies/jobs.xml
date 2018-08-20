@@ -5,16 +5,15 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">12</argument>
+                <argument name="yn">3</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/flink/examples/batch/KMeans.jar</path>
             <arguments>
-                <argument>/data/vinh.tran/jobData/kMeans/points</argument>
-                <argument>/data/vinh.tran/jobData/kMeans/centers</argument>
-                <argument>/data/vinh.tran/scheduling-recurring-applications/output/kMeans</argument>
-                <argument>30</argument>
+                <argument name="--points">hdfs:///user/vinh.tran/kMeans/points</argument>
+                <argument name="--centroids">hdfs:///user/vinh.tran/kMeans/centers</argument>
+                <argument name="--iterations">3</argument>
             </arguments>
         </jar>
     </job>
@@ -23,7 +22,7 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">4</argument>
+                <argument name="yn">3</argument>
             </arguments>
         </runner>
         <jar>
@@ -32,4 +31,23 @@
             </arguments>
         </jar>
     </job>
+    <job name="tpch10">
+        <runner>
+            <name>flink</name>
+            <arguments>
+                <argument name="m">yarn-cluster</argument>
+                <argument name="yn">3</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/jobData/TPCH10.jar</path>
+            <arguments>
+                <argument name="--customer">hdfs:///user/vinh.tran/tpch10small/customer.csv</argument>
+                <argument name="--lineitem">hdfs:///user/vinh.tran/tpch10small/lineitem.csv</argument>
+                <argument name="--nation">hdfs:///user/vinh.tran/tpch10small/nation.csv</argument>
+                <argument name="--orders">hdfs:///user/vinh.tran/tpch10small/orders.csv</argument>
+            </arguments>
+        </jar>
+    </job>
+
 </jobs>

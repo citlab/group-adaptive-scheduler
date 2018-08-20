@@ -3,5 +3,12 @@
    <experiment name="simpleTest">
       <job name="kMeans">0</job>
       <job name="enumTriangles">0</job>
+      <job name="tpch10">0</job>
+      <job name="kMeans">0</job>
+      <job name="enumTriangles">0</job>
+      <job name="tpch10">0</job>
+      <job name="kMeans">0</job>
+      <job name="enumTriangles">0</job>
+      <job name="tpch10">0</job>
    </experiment>
 </suite>
