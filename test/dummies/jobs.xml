@@ -5,7 +5,7 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">3</argument>
+                <argument name="yn">12</argument>
             </arguments>
         </runner>
         <jar>
@@ -22,7 +22,7 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">3</argument>
+                <argument name="yn">12</argument>
             </arguments>
         </runner>
         <jar>
@@ -36,7 +36,7 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">3</argument>
+                <argument name="yn">12</argument>
             </arguments>
         </runner>
         <jar>
@@ -55,7 +55,7 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">3</argument>
+                <argument name="yn">12</argument>
             </arguments>
         </runner>
         <jar>
