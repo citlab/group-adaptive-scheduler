@@ -46,6 +46,7 @@
                 <argument name="--lineitem">hdfs:///user/vinh.tran/tpch10small/lineitem.csv</argument>
                 <argument name="--nation">hdfs:///user/vinh.tran/tpch10small/nation.csv</argument>
                 <argument name="--orders">hdfs:///user/vinh.tran/tpch10small/orders.csv</argument>
+                <argument name="--output">hdfs:///user/vinh.tran/tpch3small/output.csv</argument>
             </arguments>
         </jar>
     </job>
