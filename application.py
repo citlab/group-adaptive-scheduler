@@ -5,6 +5,7 @@ from threading import Thread
 from resource_manager import ResourceManager
 from abc import ABCMeta, abstractmethod
 import uuid
+import datetime
 
 
 class NotCorrectlyScheduledError(Exception):
@@ -45,6 +46,7 @@ class Application(Container):
         self.n_containers = self.n_tasks
         self.containers = self.tasks
         self.data_set = data_set
+        self.nodes = set()
 
     @property
     def application(self):
@@ -62,6 +64,10 @@ class Application(Container):
                 raise NotCorrectlyScheduledError(
                     "A task of the application {} is not scheduled on a node".format(self.name)
                 )
+            self.nodes.add(task.node.address)
+
+        # print(self.nodes)
+        print(datetime.datetime.utcnow().strftime('%Y-%m-%d"T"%H:%M:%S"Z"'))
 
         self.thread = Thread(target=self._run, args=[resource_manager, on_finish, sleep_during_loop])
         self.thread.start()
@@ -75,6 +81,8 @@ class Application(Container):
             print("Start {} with cmd: {}".format(self.id, cmd))
         subprocess.Popen(cmd, shell=True)
 
+        self.start_at = datetime.datetime.utcnow()
+
         time.sleep(sleep_during_loop + 30)
         while not resource_manager.is_application_finished(self.id):
             if not self.is_running and resource_manager.is_application_running(self.id):
@@ -83,6 +91,20 @@ class Application(Container):
             time.sleep(sleep_during_loop)
 
         print("Application {} has finished".format(self))
+
+        self.end_at = datetime.datetime.utcnow()
+
+        host_list = "|".join([address for address in self.nodes])
+        export_file_name = self.id + "_" + self.name
+
+        cmd_query_cpu = "influx  -precision rfc3339 -username root -password root -database 'telegraf' -host 'localhost'" \
+                  " -execute 'SELECT * FROM \"telegraf\".\"autogen\".\"cpu\" " \
+                  "WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/' -format 'csv' > /data/vinh.tran/expData/{}_cpu.csv"\
+            .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'), self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'), host_list, export_file_name)
+
+        # print(cmd_query_cpu)
+        subprocess.Popen(cmd_query_cpu, shell=True)
+
 
         if callable(on_finish):
             on_finish(self)
