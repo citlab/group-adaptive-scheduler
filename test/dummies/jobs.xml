@@ -68,5 +68,81 @@
             </arguments>
         </jar>
     </job>
+    <job name="wordcount">
+        <runner>
+            <name>flink</name>
+            <arguments>
+                <argument name="m">yarn-cluster</argument>
+                <argument name="yn">12</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/flink/examples/batch/WordCount.jar</path>
+            <arguments>
+                <argument name="--input">hdfs:///user/vinh.tran/wordcount/input_huge2</argument>
+                <argument name="--output">/data/vinh.tran/wordcount/output</argument>
+            </arguments>
+        </jar>
+    </job>
+    <job name="pagerank">
+        <runner>
+            <name>flink</name>
+            <arguments>
+                <argument name="m">yarn-cluster</argument>
+                <argument name="yn">12</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/flink/examples/gelly/flink-gelly-examples_2.11-1.6.0.jar</path>
+            <arguments>
+                <argument name="--algorithm">PageRank</argument>
+                <argument name="--input">CSV</argument>
+                <argument name="--type">integer</argument>
+                <argument name="--simplify">directed</argument>
+                <argument name="--input_filename">hdfs:///user/vinh.tran/pagerank/pagerank_input.txt</argument>
+                <argument name="--input_field_delimiter">$'\t'</argument>
+                <argument name="--output">CSV</argument>
+                <argument name="--output_filename">hdfs:///user/vinh.tran/jobData/pagerank/output.txt</argument>
+            </arguments>
+        </jar>
+    </job>
+    <job name="connectedcomponents">
+        <runner>
+            <name>flink</name>
+            <arguments>
+                <argument name="m">yarn-cluster</argument>
+                <argument name="yn">12</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/flink/examples/gelly/flink-gelly-examples_2.11-1.6.0.jar</path>
+            <arguments>
+                <argument name="--algorithm">ConnectedComponents</argument>
+                <argument name="--input">CSV</argument>
+                <argument name="--type">integer</argument>
+                <argument name="--simplify">directed</argument>
+                <argument name="--input_filename">hdfs:///user/vinh.tran/pagerank/pagerank_input.txt</argument>
+                <argument name="--input_field_delimiter">$'\t'</argument>
+                <argument name="--output">CSV</argument>
+                <argument name="--output_filename">hdfs:///user/vinh.tran/jobData/connectedcomponents/output.txt</argument>
+            </arguments>
+        </jar>
+    </job>
+    <job name="linearregression">
+        <runner>
+            <name>flink</name>
+            <arguments>
+                <argument name="m">yarn-cluster</argument>
+                <argument name="yn">12</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/jobData/LinearRegression.jar</path>
+            <arguments>
+                <argument name="--input">hdfs:///user/vinh.tran/linearregression/input</argument>
+                <argument name="--output">/data/vinh.tran/jobData/linearregression/output</argument>
+            </arguments>
+        </jar>
+    </job>
 
 </jobs>
