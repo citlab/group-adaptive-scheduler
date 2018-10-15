@@ -97,14 +97,55 @@ class Application(Container):
         host_list = "|".join([address for address in self.nodes])
         export_file_name = self.id + "_" + self.name
 
-        cmd_query_cpu = "influx  -precision rfc3339 -username root -password root -database 'telegraf' -host 'localhost'" \
-                  " -execute 'SELECT * FROM \"telegraf\".\"autogen\".\"cpu\" " \
-                  "WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/' -format 'csv' > /data/vinh.tran/expData/{}_cpu.csv"\
-            .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'), self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'), host_list, export_file_name)
-
+        cmd_query_cpu = "mkdir /data/vinh.tran/expData/{} && influx -precision rfc3339 -username root -password root" \
+                        " -database 'telegraf' -host 'localhost' -execute 'SELECT usage_user,usage_iowait " \
+                        "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                        "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/expData/{}/cpu.csv" \
+            .format(export_file_name,
+                    self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    export_file_name)
         # print(cmd_query_cpu)
-        subprocess.Popen(cmd_query_cpu, shell=True)
+        # subprocess.Popen(cmd_query_cpu, shell=True)
 
+        cmd_query_mem = "influx -precision rfc3339 -username root -password root " \
+                        "-database 'telegraf' -host 'localhost' -execute 'SELECT used_percent " \
+                        "FROM \"telegraf\".\"autogen\".\"mem\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                        "GROUP BY host' -format 'csv' > /data/vinh.tran/expData/{}/mem.csv" \
+            .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    export_file_name)
+        # print(cmd_query_mem)
+
+        cmd_query_disk = "influx -precision rfc3339 -username root -password root " \
+                        "-database 'telegraf' -host 'localhost' -execute 'SELECT derivative(last(\"io_time\"),1ms) " \
+                        "FROM \"telegraf\".\"autogen\".\"diskio\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                        "GROUP BY \"host\",\"name\",time(10s)' -format 'csv' > /data/vinh.tran/expData/{}/disk.csv" \
+            .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    export_file_name)
+        print(cmd_query_disk)
+
+        cmd_query_net = "influx -precision rfc3339 -username root -password root " \
+                         "-database 'telegraf' -host 'localhost' -execute 'SELECT  derivative(first(\"bytes_recv\"),1s) " \
+                         "as \"download bytes/sec\",derivative(first(\"bytes_sent\"),1s) as \"upload bytes/sec\"" \
+                         "FROM \"telegraf\".\"autogen\".\"net\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                         "GROUP BY \"host\",time(10s)' -format 'csv' > /data/vinh.tran/expData/{}/net.csv" \
+            .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    export_file_name)
+        print(cmd_query_net)
+
+        subprocess.Popen(cmd_query_cpu + " && " + cmd_query_mem + " && " + cmd_query_disk + " && " + cmd_query_net, shell=True)
+
+        time.sleep(1)
+
+        with open('/data/vinh.tran/expData/{}/cmd.txt'.format(export_file_name), 'w') as file:
+            file.write("{}\n\n{}\n\n{}\n\n{}\n".format(cmd_query_cpu, cmd_query_mem, cmd_query_disk, cmd_query_net))
 
         if callable(on_finish):
             on_finish(self)
