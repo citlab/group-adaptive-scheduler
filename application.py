@@ -106,7 +106,7 @@ class Application(Container):
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
                     export_file_name)
-        # print(cmd_query_cpu)
+        print(cmd_query_cpu)
         # subprocess.Popen(cmd_query_cpu, shell=True)
 
         cmd_query_mem = "influx -precision rfc3339 -username root -password root " \
@@ -117,7 +117,7 @@ class Application(Container):
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
                     export_file_name)
-        # print(cmd_query_mem)
+        print(cmd_query_mem)
 
         cmd_query_disk = "influx -precision rfc3339 -username root -password root " \
                         "-database 'telegraf' -host 'localhost' -execute 'SELECT derivative(last(\"io_time\"),1ms) " \
@@ -144,7 +144,7 @@ class Application(Container):
 
         time.sleep(1)
 
-        with open('/data/vinh.tran/expData/{}/cmd.txt'.format(export_file_name), 'w') as file:
+        with open('/data/vinh.tran/expData/{}/cmd.txt'.format(export_file_name), 'a') as file:
             file.write("{}\n\n{}\n\n{}\n\n{}\n".format(cmd_query_cpu, cmd_query_mem, cmd_query_disk, cmd_query_net))
 
         if callable(on_finish):
