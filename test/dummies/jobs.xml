@@ -5,15 +5,15 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">12</argument>
+                <argument name="yn">24</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/flink/examples/batch/KMeans.jar</path>
             <arguments>
-                <argument name="--points">hdfs:///user/vinh.tran/kMeans/points</argument>
-                <argument name="--centroids">hdfs:///user/vinh.tran/kMeans/centers</argument>
-                <argument name="--iterations">3</argument>
+                <argument name="--points">hdfs:///user/vinh.tran/30mins/kMeans/points</argument>
+                <argument name="--centroids">hdfs:///user/vinh.tran/30mins/kMeans/centers</argument>
+                <argument name="--iterations">4</argument>
             </arguments>
         </jar>
     </job>
@@ -36,17 +36,17 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">12</argument>
+                <argument name="yn">24</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/jobData/TPCH10.jar</path>
             <arguments>
-                <argument name="--customer">hdfs:///user/vinh.tran/tpch10small/customer.csv</argument>
-                <argument name="--lineitem">hdfs:///user/vinh.tran/tpch10small/lineitem.csv</argument>
-                <argument name="--nation">hdfs:///user/vinh.tran/tpch10small/nation.csv</argument>
-                <argument name="--orders">hdfs:///user/vinh.tran/tpch10small/orders.csv</argument>
-                <argument name="--output">hdfs:///user/vinh.tran/tpch3small/output.csv</argument>
+                <argument name="--customer">hdfs:///user/vinh.tran/30mins/tpch10/customer.csv</argument>
+                <argument name="--lineitem">hdfs:///user/vinh.tran/30mins/tpch10/lineitem.csv</argument>
+                <argument name="--nation">hdfs:///user/vinh.tran/30mins/tpch10/nation.csv</argument>
+                <argument name="--orders">hdfs:///user/vinh.tran/30mins/tpch10/orders.csv</argument>
+                <argument name="--output">/data/vinh.tran/jobData/tpch10small/output.csv</argument>
             </arguments>
         </jar>
     </job>
@@ -55,7 +55,7 @@
             <name>flink</name>
             <arguments>
                 <argument name="m">yarn-cluster</argument>
-                <argument name="yn">12</argument>
+                <argument name="yn">48</argument>
             </arguments>
         </runner>
         <jar>
@@ -80,7 +80,7 @@
             <path>/data/vinh.tran/flink/examples/batch/WordCount.jar</path>
             <arguments>
                 <argument name="--input">hdfs:///user/vinh.tran/wordcount/input_huge2</argument>
-                <argument name="--output">/data/vinh.tran/wordcount/output</argument>
+                <argument name="--output">/data/vinh.tran/jobData/wordcount/output</argument>
             </arguments>
         </jar>
     </job>
@@ -102,7 +102,7 @@
                 <argument name="--input_filename">hdfs:///user/vinh.tran/pagerank/pagerank_input.txt</argument>
                 <argument name="--input_field_delimiter">$'\t'</argument>
                 <argument name="--output">CSV</argument>
-                <argument name="--output_filename">hdfs:///user/vinh.tran/jobData/pagerank/output.txt</argument>
+                <argument name="--output_filename">/data/vinh.tran/jobData/pagerank/output.txt</argument>
             </arguments>
         </jar>
     </job>
@@ -124,7 +124,7 @@
                 <argument name="--input_filename">hdfs:///user/vinh.tran/pagerank/pagerank_input.txt</argument>
                 <argument name="--input_field_delimiter">$'\t'</argument>
                 <argument name="--output">CSV</argument>
-                <argument name="--output_filename">hdfs:///user/vinh.tran/jobData/connectedcomponents/output.txt</argument>
+                <argument name="--output_filename">/data/vinh.tran/jobData/connectedcomponents/output.txt</argument>
             </arguments>
         </jar>
     </job>
@@ -140,7 +140,25 @@
             <path>/data/vinh.tran/jobData/LinearRegression.jar</path>
             <arguments>
                 <argument name="--input">hdfs:///user/vinh.tran/linearregression/input</argument>
-                <argument name="--output">/data/vinh.tran/jobData/linearregression/output</argument>
+                <argument name="--output">/data/vinh.tran/jobData/linearregression/output.txt</argument>
+            </arguments>
+        </jar>
+    </job>
+    <job name="webloganalysis">
+        <runner>
+            <name>flink</name>
+            <arguments>
+                <argument name="m">yarn-cluster</argument>
+                <argument name="yn">12</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/flink/examples/batch/WebLogAnalysis.jar</path>
+            <arguments>
+                <argument name="--documents">hdfs:///user/vinh.tran/webloganalysis/documents</argument>
+                <argument name="--ranks">hdfs:///user/vinh.tran/webloganalysis/ranks</argument>
+                <argument name="--visits">hdfs:///user/vinh.tran/webloganalysis/visits</argument>
+                <argument name="--result">/data/vinh.tran/jobData/webloganalysis/output.csv</argument>
             </arguments>
         </jar>
     </job>
