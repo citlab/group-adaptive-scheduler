@@ -7,7 +7,7 @@ server:
 resource_manager:
   type: Yarn
   kwargs:
-    address: wally070
+    address: namenode
 
 #  type: DummyRM
 #  kwargs:
@@ -25,4 +25,4 @@ stat_collector:
 #  type: DummyStatCollector
   type: InfluxDB
   kwargs:
-    address: wally070
+    address: namenode

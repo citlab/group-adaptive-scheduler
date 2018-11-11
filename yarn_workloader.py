@@ -1,6 +1,6 @@
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
-from application import Application, FlinkApplication
+from application import Application, SparkApplication
 
 
 class Jobs:
@@ -19,7 +19,7 @@ class Jobs:
 
     def __read(self, jobs):
         for job in jobs.iter('job'):
-            app = xml_to_flink_application(job)
+            app = xml_to_spark_application(job)
             self._data[app.name] = app
 
     def __getitem__(self, item) -> Application:
@@ -35,18 +35,18 @@ class Jobs:
         return list(self._data.values())
 
 
-def xml_to_flink_application(job: ET.Element) -> FlinkApplication:
+def xml_to_spark_application(job: ET.Element) -> SparkApplication:
     name = job.get('name')
     n_task = 0
     tm = None
     jar_class = None
 
     for arg in job.find('runner/arguments').iter('argument'):
-        if arg.get('name') == 'yn':
+        if arg.get('name') == 'executors':
             n_task = int(arg.text)
         if arg.get('name') == 'ytm':
             tm = int(arg.text)
-        if arg.get('name') == 'c':
+        if arg.get('name') == 'class':
             jar_class = arg.text
 
     if n_task == 0:
@@ -57,7 +57,7 @@ def xml_to_flink_application(job: ET.Element) -> FlinkApplication:
     for arg in job.find('jar/arguments').iter('argument'):
         args.append("{} {}".format(arg.get('name', ''), arg.text).strip())
 
-    return FlinkApplication(name, n_task, jar, args, jar_class=jar_class, tm=tm)
+    return SparkApplication(name, n_task, jar, args, jar_class=jar_class, tm=tm)
 
 
 class Experiment:

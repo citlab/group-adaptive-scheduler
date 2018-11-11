@@ -178,7 +178,7 @@ class DummyApplication(Application):
         return ["sleep", "0.1"]
 
 
-class FlinkApplication(Application):
+class SparkApplication(Application):
     def __init__(self, name, n_task, jar, args, jar_class=None, tm=None, **kwargs):
         super().__init__(name, n_task, **kwargs)
         self.jar = jar
@@ -188,14 +188,16 @@ class FlinkApplication(Application):
 
     def command_line(self):
         cmd = [
-            "$FLINK_HOME/bin/flink",
-            "run",
-            "-m yarn-cluster",
-            "-ynm {}_{}".format(self.name, self.data_set),
-            "-yn {}".format(len(self.tasks)),
-            "-yD fix.container.hosts={tasks_host}".format(
-                tasks_host=",".join(self.tasks_hosts()),
-            ),
+            "$SPARK_HOME/bin/spark-submit",
+            "--master yarn",
+            "--deploy-mode cluster",
+            "--num-executors {}".format(self.tasks),
+            "--name {}".format(self.name),
+            # "-ynm {}_{}".format(self.name, self.data_set),
+            # "-yn {}".format(len(self.tasks)),
+            # "-yD fix.container.hosts={tasks_host}".format(
+            #     tasks_host=",".join(self.tasks_hosts()),
+            # ),
             # "-yDfix.am.host={am_host}".format(
             #     am_host=self.node.address
             # )
@@ -204,7 +206,7 @@ class FlinkApplication(Application):
             cmd.append("-ytm {}".format(self.tm))
 
         if self.jar_class is not None:
-            cmd.append("-c {}".format(self.jar_class))
+            cmd.append("--class {}".format(self.jar_class))
 
         cmd.append(self.jar)
 
@@ -228,7 +230,7 @@ class FlinkApplication(Application):
         return hosts
 
     def copy(self):
-        return FlinkApplication(
+        return SparkApplication(
             self.name,
             len(self.tasks),
             self.jar,
