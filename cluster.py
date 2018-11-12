@@ -50,12 +50,15 @@ class Node(Server):
 
 
 class Cluster:
-    def __init__(self, resource_manager: ResourceManager, stat_collector: StatCollector, node_containers=None):
+    def __init__(self, resource_manager: ResourceManager, stat_collector: StatCollector, application_master, node_containers=None):
         self.resource_manager = resource_manager
         self.stat_collector = stat_collector
         self.nodes = {}
+        self.application_master = application_master
 
         for address, n_containers in self.resource_manager.nodes().items():
+            if address == self.application_master: # Don't place job on node running application master
+                continue
             self.nodes[address] = Node(address, n_containers if node_containers is None else node_containers)
 
     def apps_usage(self) -> List[Tuple[List[Application], Usage]]:

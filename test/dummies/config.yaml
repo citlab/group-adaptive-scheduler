@@ -26,3 +26,6 @@ stat_collector:
   type: InfluxDB
   kwargs:
     address: namenode
+
+cluster:
+  application_master: datanode1

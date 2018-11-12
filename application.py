@@ -77,8 +77,8 @@ class Application(Container):
 
     def _run(self, resource_manager: ResourceManager, on_finish, sleep_during_loop):
         cmd = " ".join(self.command_line())
-        if self.print_command_line:
-            print("Start {} with cmd: {}".format(self.id, cmd))
+        #if self.print_command_line:
+        print("Start {} with cmd: {}".format(self.id, cmd))
         subprocess.Popen(cmd, shell=True)
 
         self.start_at = datetime.datetime.utcnow()
@@ -191,7 +191,7 @@ class SparkApplication(Application):
             "$SPARK_HOME/bin/spark-submit",
             "--master yarn",
             "--deploy-mode cluster",
-            "--num-executors {}".format(self.tasks),
+            "--num-executors {}".format(len(self.tasks)),
             "--name {}".format(self.name),
             # "-ynm {}_{}".format(self.name, self.data_set),
             # "-yn {}".format(len(self.tasks)),

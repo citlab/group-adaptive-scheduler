@@ -24,6 +24,7 @@ def cluster(yaml_source):
     return Cluster(
         resource_manager=rm,
         stat_collector=stat,
+        application_master=config['cluster']['application_master'],
         node_containers=config['server'].get('containers', None)
     )
 

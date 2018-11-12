@@ -93,7 +93,7 @@ class Scheduler(metaclass=ABCMeta):
     def place_containers(self, app: Application):
         pass
 
-    def _place_random(self, app: Application, n_containers=3):
+    def _place_random(self, app: Application, n_containers=2):
         nodes = self.cluster.non_full_nodes()
         good_nodes = [
             n for n in nodes
@@ -105,7 +105,7 @@ class Scheduler(metaclass=ABCMeta):
         return self._place(app, node, n_containers)
 
     @staticmethod
-    def _place(app: Application, node: Node, n_containers=3):
+    def _place(app: Application, node: Node, n_containers=2):
         if n_containers <= 0:
             raise ValueError("Can not place {} containers".format(n_containers))
         # print("Place {} on {} ({})".format(app, node, node.available_containers()))
