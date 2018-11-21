@@ -7,7 +7,7 @@ server:
 resource_manager:
   type: Yarn
   kwargs:
-    address: namenode
+    address: wally070
 
 #  type: DummyRM
 #  kwargs:
@@ -25,7 +25,7 @@ stat_collector:
 #  type: DummyStatCollector
   type: InfluxDB
   kwargs:
-    address: namenode
+    address: wally070
 
 cluster:
-  application_master: datanode1
+  application_master: wally080.cit.tu-berlin.de
