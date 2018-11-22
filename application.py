@@ -97,7 +97,7 @@ class Application(Container):
         host_list = "|".join([address for address in self.nodes])
         export_file_name = self.id + "_" + self.name
 
-        cmd_query_cpu = "mkdir /data/vinh.tran/expData/{} && influx -precision rfc3339 -username root -password root" \
+        cmd_query_cpu = "mkdir /data/vinh.tran/new/expData/{} && influx -precision rfc3339 -username root -password root" \
                         " -database 'telegraf' -host 'localhost' -execute 'SELECT usage_user,usage_iowait " \
                         "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                         "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu.csv" \
@@ -144,7 +144,7 @@ class Application(Container):
 
         time.sleep(1)
 
-        with open('/data/vinh.tran/expData/{}/cmd.txt'.format(export_file_name), 'a') as file:
+        with open('/data/vinh.tran/new/expData/{}/cmd.txt'.format(export_file_name), 'a') as file:
             file.write("{}\n\n{}\n\n{}\n\n{}\n".format(cmd_query_cpu, cmd_query_mem, cmd_query_disk, cmd_query_net))
 
         if callable(on_finish):
@@ -218,7 +218,7 @@ class SparkApplication(Application):
             else:
                 cmd.append(arg)
 
-        cmd.append("1> apps_log/{}.log".format(self.id))
+        cmd.append("1> apps_log/{}.log".format(self.id + "_" + self.name))
 
         return cmd
 
