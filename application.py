@@ -100,7 +100,7 @@ class Application(Container):
         cmd_query_cpu = "mkdir /data/vinh.tran/expData/{} && influx -precision rfc3339 -username root -password root" \
                         " -database 'telegraf' -host 'localhost' -execute 'SELECT usage_user,usage_iowait " \
                         "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/expData/{}/cpu.csv" \
+                        "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu.csv" \
             .format(export_file_name,
                     self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -112,7 +112,7 @@ class Application(Container):
         cmd_query_mem = "influx -precision rfc3339 -username root -password root " \
                         "-database 'telegraf' -host 'localhost' -execute 'SELECT used_percent " \
                         "FROM \"telegraf\".\"autogen\".\"mem\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "GROUP BY host' -format 'csv' > /data/vinh.tran/expData/{}/mem.csv" \
+                        "GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/mem.csv" \
             .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
@@ -122,7 +122,7 @@ class Application(Container):
         cmd_query_disk = "influx -precision rfc3339 -username root -password root " \
                         "-database 'telegraf' -host 'localhost' -execute 'SELECT derivative(last(\"io_time\"),1ms) " \
                         "FROM \"telegraf\".\"autogen\".\"diskio\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "GROUP BY \"host\",\"name\",time(10s)' -format 'csv' > /data/vinh.tran/expData/{}/disk.csv" \
+                        "GROUP BY \"host\",\"name\",time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/disk.csv" \
             .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
@@ -133,7 +133,7 @@ class Application(Container):
                          "-database 'telegraf' -host 'localhost' -execute 'SELECT  derivative(first(\"bytes_recv\"),1s) " \
                          "as \"download bytes/sec\",derivative(first(\"bytes_sent\"),1s) as \"upload bytes/sec\"" \
                          "FROM \"telegraf\".\"autogen\".\"net\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                         "GROUP BY \"host\",time(10s)' -format 'csv' > /data/vinh.tran/expData/{}/net.csv" \
+                         "GROUP BY \"host\",time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/net.csv" \
             .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
