@@ -11,7 +11,8 @@
         <jar>
             <path>/data/vinh.tran/new/jobData/runtime-prediction-spark-jobs-1.0-SNAPSHOT.jar</path>
             <arguments>
-                <argument>hdfs:///user/ubuntu/wordcount/inputFull</argument>
+                <argument>hdfs:///user/vinh.tran/wordcount/inputFull</argument>
+                <argument>hdfs:///user/vinh.tran/wordcount/output</argument>
             </arguments>
         </jar>
     </job>
@@ -92,6 +93,7 @@
             <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
             <arguments>
                 <argument>hdfs:///user/vinh.tran/svm/input</argument>
+		<argument>hdfs:///user/vinh.tran/svm/output</argument>
             </arguments>
         </jar>
     </job>
