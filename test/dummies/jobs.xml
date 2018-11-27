@@ -97,4 +97,19 @@
             </arguments>
         </jar>
     </job>
+    <job name="TPCH8">
+        <runner>
+            <name>spark</name>
+            <arguments>
+                <argument name="executors">32</argument>
+                <argument name="class">main.scala.TpchQuery</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/new/jobData/spark-tpc-h-queries_2.11-1.0.jar</path>
+            <arguments>
+                <argument>8</argument>
+            </arguments>
+        </jar>
+    </job>
 </jobs>
