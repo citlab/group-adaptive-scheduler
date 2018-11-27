@@ -100,51 +100,55 @@ class Application(Container):
         cmd_query_cpu = "mkdir /data/vinh.tran/new/expData/{} && influx -precision rfc3339 -username root -password root" \
                         " -database 'telegraf' -host 'localhost' -execute 'SELECT usage_user,usage_iowait " \
                         "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu_" + self.name + ".csv" \
+                        "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu_{}.csv" \
             .format(export_file_name,
                     self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
-                    export_file_name)
+                    export_file_name,
+                    self.name)
         print(cmd_query_cpu)
         # subprocess.Popen(cmd_query_cpu, shell=True)
 
         cmd_query_mem = "influx -precision rfc3339 -username root -password root " \
                         "-database 'telegraf' -host 'localhost' -execute 'SELECT used_percent " \
                         "FROM \"telegraf\".\"autogen\".\"mem\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/mem_" + self.name + ".csv" \
+                        "GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/mem_{}.csv" \
             .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
-                    export_file_name)
+                    export_file_name,
+                    self.name)
         print(cmd_query_mem)
 
         cmd_query_disk = "influx -precision rfc3339 -username root -password root " \
                         "-database 'telegraf' -host 'localhost' -execute 'SELECT derivative(last(\"io_time\"),1ms) " \
                         "FROM \"telegraf\".\"autogen\".\"diskio\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "GROUP BY \"host\",\"name\",time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/disk_" + self.name + ".csv" \
+                        "GROUP BY \"host\",\"name\",time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/disk_{}.csv" \
             .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
-                    export_file_name)
+                    export_file_name,
+                    self.name)
         print(cmd_query_disk)
 
         cmd_query_net = "influx -precision rfc3339 -username root -password root " \
                          "-database 'telegraf' -host 'localhost' -execute 'SELECT  derivative(first(\"bytes_recv\"),1s) " \
                          "as \"download bytes/sec\",derivative(first(\"bytes_sent\"),1s) as \"upload bytes/sec\"" \
                          "FROM \"telegraf\".\"autogen\".\"net\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                         "GROUP BY \"host\",time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/net_" + self.name + ".csv" \
+                         "GROUP BY \"host\",time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/net_{}.csv" \
             .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
-                    export_file_name)
+                    export_file_name,
+                    self.name)
         print(cmd_query_net)
 
         subprocess.Popen(cmd_query_cpu + " && " + cmd_query_mem + " && " + cmd_query_disk + " && " + cmd_query_net, shell=True)
 
         time.sleep(1)
 
-        with open("/data/vinh.tran/new/expData/{}/cmd_" + self.name + ".txt".format(export_file_name), 'a') as file:
+        with open("/data/vinh.tran/new/expData/{}/cmd_{}.txt".format(export_file_name, self.name), 'a') as file:
             file.write("{}\n\n{}\n\n{}\n\n{}\n".format(cmd_query_cpu, cmd_query_mem, cmd_query_disk, cmd_query_net))
 
         if callable(on_finish):
