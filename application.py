@@ -100,7 +100,7 @@ class Application(Container):
         cmd_query_cpu = "mkdir /data/vinh.tran/new/expData/{} && influx -precision rfc3339 -username root -password root" \
                         " -database 'telegraf' -host 'localhost' -execute 'SELECT mean(usage_user) as \"mean_cpu_percent\",mean(usage_iowait) as \"mean_io_wait\" " \
                         "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu_{}.csv" \
+                        "AND cpu = '\\''cpu-total'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu_{}.csv" \
             .format(export_file_name,
                     self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -113,7 +113,7 @@ class Application(Container):
         cmd_query_mem = "influx -precision rfc3339 -username root -password root " \
                         "-database 'telegraf' -host 'localhost' -execute 'SELECT mean(used_percent) " \
                         "FROM \"telegraf\".\"autogen\".\"mem\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/mem_{}.csv" \
+                        "GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/mem_{}.csv" \
             .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
