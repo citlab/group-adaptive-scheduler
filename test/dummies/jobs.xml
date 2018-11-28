@@ -112,4 +112,20 @@
             </arguments>
         </jar>
     </job>
+    <job name="Sort">
+        <runner>
+            <name>spark</name>
+            <arguments>
+                <argument name="executors">32</argument>
+                <argument name="class">Sort</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
+            <arguments>
+                <argument>hdfs:///user/vinh.tran/sort/lineitem.tbl</argument>
+                <argument>hdfs:///user/vinh.tran/sort/output</argument>
+            </arguments>
+        </jar>
+    </job>
 </jobs>
