@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <jobs>
-    <job name="wordcount">
+    <job name="WordCount">
         <runner>
             <name>flink</name>
             <arguments>
@@ -125,6 +125,24 @@
             <arguments>
                 <argument>hdfs:///user/vinh.tran/sort/lineitem.tbl</argument>
                 <argument>hdfs:///user/vinh.tran/sort/output</argument>
+            </arguments>
+        </jar>
+    </job>
+    <job name="SortedWordCount">
+        <runner>
+            <name>spark</name>
+            <arguments>
+                <argument name="executors">32</argument>
+                <argument name="class">SortedWordCount</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
+            <arguments>
+                <argument>2</argument>
+                <argument>hdfs:///user/vinh.tran/sortedwordcount/input</argument>
+                <argument>hdfs:///user/vinh.tran/sortedwordcount/output</argument>
+                <argument>ascending</argument>
             </arguments>
         </jar>
     </job>
