@@ -114,8 +114,7 @@ class Application(Container):
                         " -database 'telegraf' -host 'localhost' -execute 'SELECT mean(usage_user) as \"mean_cpu_percent\",mean(usage_iowait) as \"mean_io_wait\" " \
                         "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                         "AND cpu = '\\''cpu-total'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu_{}_mean.csv" \
-            .format(export_file_name,
-                    self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
                     export_file_name,
