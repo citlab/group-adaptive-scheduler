@@ -2,33 +2,34 @@
 <jobs>
     <job name="WordCount">
         <runner>
-            <name>flink</name>
+            <name>spark</name>
             <arguments>
-                <argument name="executors">32</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">de.tuberlin.cit.experiments.prediction.spark.SparkWC</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/new/jobData/runtime-prediction-spark-jobs-1.0-SNAPSHOT.jar</path>
             <arguments>
-                <argument>hdfs:///user/vinh.tran/wordcount/inputFull</argument>
+                <argument>hdfs:///user/vinh.tran/wordcount/inputTotal</argument>
                 <argument>hdfs:///user/vinh.tran/wordcount/output</argument>
             </arguments>
         </jar>
     </job>
-    <job name="JavaPageRank">
+    <job name="PageRank">
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">32</argument>
-                <argument name="class">org.apache.spark.examples.JavaPageRank</argument>
+                <argument name="executors">64</argument>
+                <argument name="class">de.tuberlin.cit.experiments.prediction.spark.GraphXPageRank</argument>
             </arguments>
         </runner>
         <jar>
-            <path>/data/vinh.tran/new/spark/examples/jars/spark-examples_2.11-2.4.0.jar</path>
+            <path>/data/vinh.tran/new/jobData/runtime-prediction-spark-jobs-1.0-SNAPSHOT.jar</path>
             <arguments>
-                <argument>hdfs:///user/vinh.tran/pagerank/pagerank_input.txt</argument>
-                <argument>10</argument>
+                <argument>hdfs:///user/vinh.tran/triangleCounting/Theory-5-9-16-25-81-B2k.tsv</argument>
+		<argument>hdfs:///user/vinh.tran/pagerank/output</argument>
+                <argument>45</argument>
             </arguments>
         </jar>
     </job>
@@ -36,16 +37,16 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">32</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">org.apache.spark.examples.SparkKMeans</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/new/spark/examples/jars/spark-examples_2.11-2.4.0.jar</path>
             <arguments>
-                <argument>hdfs:///user/vinh.tran/kMeans/input</argument>
-                <argument>50</argument>
-                <argument>0.06</argument>
+                <argument>hdfs:///user/vinh.tran/kMeans80C/input</argument>
+                <argument>80</argument>
+                <argument>0.08</argument>
             </arguments>
         </jar>
     </job>
@@ -53,16 +54,15 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">32</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">JavaHdfsLR</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
             <arguments>
-                <argument>hdfs:///user/vinh.tran/logisticRegression/input</argument>
-                <argument>50</argument>
-                <argument>0.06</argument>
+                <argument>hdfs:///user/vinh.tran/logisticRegression90M20F/input</argument>
+                <argument>48</argument>
             </arguments>
         </jar>
     </job>
@@ -70,30 +70,31 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">32</argument>
+                <argument name="executors">30</argument>
                 <argument name="class">de.tuberlin.cit.experiments.prediction.spark.LinearRegression</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/new/jobData/runtime-prediction-spark-jobs-1.0-SNAPSHOT.jar</path>
             <arguments>
-                <argument>hdfs:///user/vinh.tran/logisticRegression/input</argument>
+                <argument>hdfs:///user/vinh.tran/linearRegression11/part-00000</argument>
+		<argument>100</argument>
             </arguments>
         </jar>
     </job>
-    <job name="JavaSVMWithSGDExample">
+    <job name="SVM">
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">32</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">JavaSVMWithSGDExample</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
             <arguments>
-                <argument>hdfs:///user/vinh.tran/svm/input</argument>
-		<argument>hdfs:///user/vinh.tran/svm/output</argument>
+                <argument>hdfs:///user/vinh.tran/svm70M/part-00000</argument>
+		<argument>hdfs:///user/vinh.tran/svm70M/output</argument>
             </arguments>
         </jar>
     </job>
@@ -101,14 +102,14 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">32</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">main.scala.TpchQuery</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/new/jobData/spark-tpc-h-queries_2.11-1.0.jar</path>
             <arguments>
-                <argument>8</argument>
+                <argument>18</argument>
             </arguments>
         </jar>
     </job>
@@ -116,15 +117,15 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">32</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">Sort</argument>
             </arguments>
         </runner>
         <jar>
             <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
             <arguments>
-                <argument>hdfs:///user/vinh.tran/sort/lineitem.tbl</argument>
-                <argument>hdfs:///user/vinh.tran/sort/output</argument>
+                <argument>hdfs:///user/vinh.tran/sort24/lineitem.tbl</argument>
+                <argument>hdfs:///user/vinh.tran/sort24/output</argument>
             </arguments>
         </jar>
     </job>
@@ -132,7 +133,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">32</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">SortedWordCount</argument>
             </arguments>
         </runner>
@@ -143,6 +144,71 @@
                 <argument>hdfs:///user/vinh.tran/sortedwordcount/input</argument>
                 <argument>hdfs:///user/vinh.tran/sortedwordcount/output</argument>
                 <argument>ascending</argument>
+            </arguments>
+        </jar>
+    </job>
+    <job name="DocumentAnagrams">
+        <runner>
+            <name>spark</name>
+            <arguments>
+                <argument name="executors">64</argument>
+                <argument name="class">DocumentAnagrams</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
+            <arguments>
+                <argument>2</argument>
+                <argument>hdfs:///user/vinh.tran/documentanagrams/xaa</argument>
+                <argument>hdfs:///user/vinh.tran/documentanagrams/output</argument>
+            </arguments>
+        </jar>
+    </job>
+    <job name="OutlinerDetection">
+        <runner>
+            <name>spark</name>
+            <arguments>
+                <argument name="executors">64</argument>
+                <argument name="class">OutlinerDetection</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
+            <arguments>
+                <argument>600</argument>
+                <argument>hdfs:///user/vinh.tran/outlinerdetection/part-00000</argument>
+            </arguments>
+        </jar>
+    </job>
+    <job name="CountTriangles">
+        <runner>
+            <name>spark</name>
+            <arguments>
+                <argument name="executors">64</argument>
+                <argument name="class">CountTriangles</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
+            <arguments>
+                <argument>hdfs:///user/vinh.tran/counttriangles/Theory-4-5-9-16-25-B2k.tsv</argument>
+                <argument>hdfs:///user/vinh.tran/counttriangles/output</argument>
+            </arguments>
+        </jar>
+    </job>
+    <job name="ConnectedComponent">
+        <runner>
+            <name>spark</name>
+            <arguments>
+                <argument name="executors">64</argument>
+                <argument name="class">de.tuberlin.cit.experiments.prediction.spark.ConnectedComponent</argument>
+            </arguments>
+        </runner>
+        <jar>
+            <path>/data/vinh.tran/new/jobData/runtime-prediction-spark-jobs-1.0-SNAPSHOT.jar</path>
+            <arguments>
+                <argument>hdfs:///user/vinh.tran/connectedComponent/inputSplit</argument>
+                <argument>4</argument>
             </arguments>
         </jar>
     </job>
