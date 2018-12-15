@@ -2,6 +2,8 @@ import subprocess
 import time
 from typing import List
 from threading import Thread
+
+from job_group_data import JobGroupData
 from resource_manager import ResourceManager
 from abc import ABCMeta, abstractmethod
 import uuid
@@ -47,6 +49,7 @@ class Application(Container):
         self.containers = self.tasks
         self.data_set = data_set
         self.nodes = set()
+        self.group = JobGroupData.groupIndexes[name]
 
     @property
     def application(self):

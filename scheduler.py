@@ -3,6 +3,7 @@ from sklearn.cross_validation import LeaveOneOut
 from cluster import Cluster, Node
 from application import Application
 from complementarity import ComplementarityEstimation
+from job_group_data import JobGroupData
 from repeated_timer import RepeatedTimer
 from threading import Lock
 from typing import List
@@ -191,6 +192,95 @@ class Adaptive(RoundRobin):
                     ",".join([self.queue[i].name for i in index])
                 ))
                 return self.queue.pop(best_i)
+
+            index.pop(best_i)
+
+        raise NoApplicationCanBeScheduled
+
+
+class GroupAdaptive(RoundRobin):
+    def __init__(self, jobs_to_peek=5, **kwargs):
+        super().__init__(**kwargs)
+        self.jobs_to_peek = jobs_to_peek
+        self.print_estimation = True
+
+    def schedule_application(self) -> Application:
+        print("GroupAdaptive-schedule_application()")
+        app, existing_group = self.get_application_to_schedule()
+        if app.n_containers > self.cluster.available_containers():
+            self.queue = [app] + self.queue
+            raise NoApplicationCanBeScheduled
+
+        self.place_containers_with_group(app, existing_group)
+
+        return app
+
+    def place_containers_with_group(self, app: Application, existing_group):
+        empty_nodes = self.cluster.empty_nodes()
+        print("App {} requires {} containers".format(app, app.n_containers))
+
+        if existing_group == -1:
+            print("No preferred group to schedule with, schedule onto first slot")
+            for node in self.cluster.nodes:
+                if JobGroupData.cluster_slots_index[node.address] == JobGroupData.SLOT_1:
+                    self._place(app, node, 4)
+        else:
+            print("The chosen existing group to co-locate is: {}".format(existing_group))
+            co_located_app = None
+            for app in self.cluster.applications(with_full_nodes=False, by_name=True):
+                if JobGroupData.groupIndexes[app.name] == existing_group:
+                    print("Choose app {} of group {} to co-locate".format(app.name, existing_group))
+                    co_located_app = app
+                    break
+            if co_located_app is not None:
+                for node in self.cluster.nodes:
+                    if node.address in co_located_app.nodes():
+                        self._place(app, node, 4)
+
+        # n_containers_scheduled = 0
+        # print("App {} requires {} containers".format(app, app.n_containers))
+        # while len(empty_nodes) > 0 and n_containers_scheduled < app.n_containers:
+        #     n_containers_scheduled += self._place(app, empty_nodes.pop())
+        #
+        # while n_containers_scheduled < app.n_containers:
+        #     n_containers_scheduled += self._place_random(app)
+
+    def get_application_to_schedule(self):
+        global best_i
+        scheduled_apps, scheduled_apps_weight = self.cluster.applications(by_name=True)
+        available_containers = self.cluster.available_containers()
+        index = list(range(min(self.jobs_to_peek, len(self.queue))))
+        best_app = None
+
+        while len(index) > 0:
+            best_group_to_schedule, best_group_existing = self.estimation.best_app_index(
+                scheduled_apps,
+                [self.queue[i] for i in index],
+                scheduled_apps_weight
+            )
+
+            if best_group_to_schedule == -1:
+                print("No app is scheduling, pick randomly")
+                best_app = self.queue[np.random.randint(0, len(index))]
+            else:
+                # Pick app from the best group to schedule
+                for i in index:
+                    if JobGroupData.groupIndexes[self.queue[i]] == best_group_to_schedule:
+                        best_app = self.queue[i]
+                        best_i = i
+                        break
+            if best_app is None:
+                return NoApplicationCanBeScheduled
+
+            if best_app.n_containers <= available_containers:
+                print("Best app group to schedule: {}".format(best_group_to_schedule))
+                print("Best app group existing: {}".format(best_group_existing))
+                print("Best app is {} ({}) of queue {}".format(
+                    best_app.name,
+                    best_group_to_schedule,
+                    ",".join([self.queue[i].name for i in index])
+                ))
+                return self.queue.pop(best_i), best_group_existing
 
             index.pop(best_i)
 

@@ -3,13 +3,19 @@ from application import DummyApplication
 import numpy as np
 
 jobs = np.array([
-    DummyApplication(0),
-    DummyApplication(1),
-    DummyApplication(2),
+    DummyApplication("TPCH21", 0),
+    DummyApplication("SVM", 1),
+    DummyApplication("LogisticRegression", 2),
+    DummyApplication("KMeans", 3),
+    DummyApplication("WordCount", 4)
 ])
 
 
 class TestIncrementalEstimation:
+
+    def run(self):
+        self.test_update_job()
+
     def test_update_job(self):
         estimation = EpsilonGreedy(jobs, initial_average=1)
 
@@ -24,7 +30,7 @@ class TestIncrementalEstimation:
 
         estimation.update_app(jobs[0], jobs[[1, 2]], 7)
         expected_data = np.array([
-            [1, 13/3, 13/3],
+            [1, 13 / 3, 13 / 3],
             [1, 1, 1],
             [1, 1, 1]
         ])
@@ -46,8 +52,13 @@ class TestIncrementalEstimation:
 
 
 class TestGradientEstimation:
+
+    def main(self):
+        print("python main function")
+        self.test_action_probability()
+
     def test_action_probability(self):
-        estimation = Gradient(jobs)
+        estimation = GroupGradient(jobs)
 
         estimation.preferences = np.array([
             [0, 5, 1],
@@ -62,10 +73,12 @@ class TestGradientEstimation:
         ])
         expected_result /= expected_result.sum()
 
-        assert np.allclose(expected_result, estimation.normalized_action_probabilities(jobs[0], jobs[[1, 2]]))
+        new_job_index, old_job_index = estimation.best_app_index([jobs[2], jobs[3], jobs[4]], [jobs[0], jobs[1]])
+
+        assert np.allclose(expected_result, new_job_index)
 
     def test_update_job(self):
-        estimation = Gradient(jobs, alpha=0.1, initial_average=1.)
+        estimation = GroupGradient(jobs, alpha=0.1, initial_average=1.)
 
         estimation.preferences = np.array([
             [0, 5, 1],
@@ -85,3 +98,7 @@ class TestGradientEstimation:
         estimation.update_app(jobs[0], jobs[[1]], 2.)
 
         assert np.allclose(expected_preferences, estimation.preferences)
+
+
+if __name__ == '__main__':
+    TestGradientEstimation().main()

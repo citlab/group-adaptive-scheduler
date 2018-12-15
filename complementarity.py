@@ -7,6 +7,7 @@ import os
 import errno
 from pprint import pprint
 from tabulate import tabulate
+from job_group_data import JobGroupData
 
 
 class ComplementarityEstimation(metaclass=ABCMeta):
@@ -15,6 +16,7 @@ class ComplementarityEstimation(metaclass=ABCMeta):
         self.apps = recurrent_apps
         self.index = {}
         self.reverse_index = {}
+        # Loop with auto index through list of
         for i, app in enumerate(sorted(recurrent_apps, key=lambda a: a.name)):
             self.index[app.name] = i
             self.reverse_index[i] = app.name
@@ -234,3 +236,99 @@ class Gradient(ComplementarityEstimation):
         print(tabulate(rows, headers, tablefmt='pipe'))
 
 
+class GroupGradient(Gradient):
+    def __init__(self, recurrent_apps: List[Application], alpha=0.01, initial_average=0):
+        super().__init__(recurrent_apps)
+        self.shape = (len(JobGroupData.groups), len(JobGroupData.groups))
+        self.apps = recurrent_apps
+        self.index = {}
+        self.reverse_index = {}
+        # Loop with auto index through list of
+        for i, app in enumerate(sorted(recurrent_apps, key=lambda a: a.name)):
+            index = JobGroupData.groupIndexes[app.name]
+            self.index[app.name] = index
+            self.reverse_index[index] = JobGroupData.groups[index].__str__()
+
+        self.alpha = alpha
+        self.average = np.full(self.shape[0], float(initial_average))
+        self.update_count = np.full(self.shape[0], 0 if initial_average == 0 else 1, dtype=np.int64)
+        self.preferences = np.zeros(self.shape)
+
+    def update_app(self, app, concurrent_apps, rate):
+        app = self.indices(app)
+        concurrent_apps = self.indices(concurrent_apps)
+
+        self.update_count[app] += 1
+        self.average[app] += (rate - self.average[app]) / self.update_count[app]
+
+        other_apps = np.delete(list(set(self.index.values())), concurrent_apps)
+        ap_concurrent = self.__action_probabilities(app, concurrent_apps)
+        ap_other = self.__action_probabilities(app, other_apps)
+
+        constant = self.alpha * (rate - self.average[app])
+
+        ix = np.ix_(app, concurrent_apps)
+        self.preferences[ix] += constant * (1 - ap_concurrent)
+
+        ix = np.ix_(app, other_apps)
+        self.preferences[ix] -= constant * ap_other
+
+    def __str__(self):
+        return type(self).__name__
+
+    def best_app_index(self, scheduled_apps, apps, scheduled_apps_weight=None):
+        if len(scheduled_apps) == 0:
+            return -1, -1
+        probabilities = self.normalized_action_probabilities(scheduled_apps, apps, scheduled_apps_weight)
+        selected_app_group = self.__choose(
+            np.arange(len(probabilities)),
+            probabilities
+        )
+        # Select which exist job group to co-located with new job
+        selected_ongoing_job = np.argmax(self.preferences, axis=0)[selected_app_group]
+        return selected_app_group, selected_ongoing_job
+
+    def __action_probabilities(self, apps_index, concurrent_apps_index):
+        exp = np.exp(self.preferences[apps_index])
+
+        return (exp[:, concurrent_apps_index].T / exp.sum(axis=1)).T
+
+    def normalized_action_probabilities(self, apps, apps_to_schedule, apps_weight=None):
+        p = self.__action_probabilities(list(set(self.indices(apps))), list(set(self.indices(apps_to_schedule))))
+        # if apps_weight is not None:
+        #     p = (p.T * apps_weight).T
+        p = p.sum(axis=0)
+        return p / p.sum()
+
+    @staticmethod
+    def __choose(items, p):
+        indices = np.arange(len(items))
+        return items[np.random.choice(indices, p=p)]
+
+    def save(self, folder):
+        self._save(folder, "average", self.average)
+        self._save(folder, "preferences", self.preferences)
+        self._save(folder, "ucount", self.update_count)
+
+    def load(self, folder):
+        self.average = np.load("{}/average.npy".format(folder))
+        self.update_count = np.load("{}/ucount.npy".format(folder))
+        self.preferences = np.load("{}/preferences.npy".format(folder))
+
+    def print(self):
+        apps_name = list(self.reverse_index.values())
+        print(tabulate(
+            [
+                ["Average"] + self.average.tolist(),
+                ["Count"] + self.update_count.tolist(),
+            ],
+            apps_name,
+            tablefmt='pipe'
+        ))
+
+        rows = []
+        headers = ["Preferences"] + apps_name
+        for i, name in self.reverse_index.items():
+            rows.append([name] + self.preferences[i].tolist())
+
+        print(tabulate(rows, headers, tablefmt='pipe'))

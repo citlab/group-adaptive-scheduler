@@ -1,6 +1,6 @@
 server:
-  disk_max: 500
-  net_max: 450
+  disk_max: 900
+  net_max: 250
   disk_name: disk
   net_interface: net
 
