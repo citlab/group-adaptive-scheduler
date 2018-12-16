@@ -216,13 +216,18 @@ class GroupAdaptive(RoundRobin):
         return app
 
     def place_containers_with_group(self, app: Application, existing_group):
-        empty_nodes = self.cluster.empty_nodes()
         print("App {} requires {} containers".format(app, app.n_containers))
 
         if existing_group == -1:
-            print("No preferred group to schedule with, schedule onto first slot")
-            for node in self.cluster.nodes:
-                if JobGroupData.cluster_slots_index[node.address] == JobGroupData.SLOT_1:
+            print("No preferred group to schedule with, check if can schedule on slot 1")
+            running_apps = len(self.cluster.applications())
+            chosen_slot = JobGroupData.SLOT_1
+            if running_apps != 0:
+                print("There are already job running, scheduling on slot 2")
+                chosen_slot = JobGroupData.SLOT_2
+            app.cluster_slot = chosen_slot
+            for node in self.cluster.nodes():
+                if JobGroupData.cluster_slots_index[node.address] == chosen_slot:
                     self._place(app, node, 4)
         else:
             print("The chosen existing group to co-locate is: {}".format(existing_group))
@@ -233,7 +238,9 @@ class GroupAdaptive(RoundRobin):
                     co_located_app = app
                     break
             if co_located_app is not None:
-                for node in self.cluster.nodes:
+                print("The chosen slot to place new job is {}".format(co_located_app.cluster_slot))
+                app.cluster_slot = co_located_app.cluster_slot
+                for node in self.cluster.nodes():
                     if node.address in co_located_app.nodes():
                         self._place(app, node, 4)
 
