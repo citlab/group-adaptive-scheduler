@@ -147,55 +147,6 @@
             </arguments>
         </jar>
     </job>
-    <job name="DocumentAnagrams">
-        <runner>
-            <name>spark</name>
-            <arguments>
-                <argument name="executors">64</argument>
-                <argument name="class">DocumentAnagrams</argument>
-            </arguments>
-        </runner>
-        <jar>
-            <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
-            <arguments>
-                <argument>2</argument>
-                <argument>hdfs:///user/vinh.tran/documentanagrams/xaa</argument>
-                <argument>hdfs:///user/vinh.tran/documentanagrams/output</argument>
-            </arguments>
-        </jar>
-    </job>
-    <job name="OutlinerDetection">
-        <runner>
-            <name>spark</name>
-            <arguments>
-                <argument name="executors">64</argument>
-                <argument name="class">OutlinerDetection</argument>
-            </arguments>
-        </runner>
-        <jar>
-            <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
-            <arguments>
-                <argument>600</argument>
-                <argument>hdfs:///user/vinh.tran/outlinerdetection/part-00000</argument>
-            </arguments>
-        </jar>
-    </job>
-    <job name="CountTriangles">
-        <runner>
-            <name>spark</name>
-            <arguments>
-                <argument name="executors">64</argument>
-                <argument name="class">CountTriangles</argument>
-            </arguments>
-        </runner>
-        <jar>
-            <path>/data/vinh.tran/new/jobData/SparkJobs-1.0-SNAPSHOT.jar</path>
-            <arguments>
-                <argument>hdfs:///user/vinh.tran/counttriangles/Theory-4-5-9-16-25-B2k.tsv</argument>
-                <argument>hdfs:///user/vinh.tran/counttriangles/output</argument>
-            </arguments>
-        </jar>
-    </job>
     <job name="ConnectedComponent">
         <runner>
             <name>spark</name>
