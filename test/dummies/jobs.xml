@@ -4,7 +4,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">64</argument>
+                <argument name="executors">16</argument>
                 <argument name="class">de.tuberlin.cit.experiments.prediction.spark.SparkWC</argument>
             </arguments>
         </runner>
@@ -20,7 +20,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">64</argument>
+                <argument name="executors">16</argument>
                 <argument name="class">de.tuberlin.cit.experiments.prediction.spark.GraphXPageRank</argument>
             </arguments>
         </runner>
@@ -28,16 +28,16 @@
             <path>/data/vinh.tran/new/jobData/runtime-prediction-spark-jobs-1.0-SNAPSHOT.jar</path>
             <arguments>
                 <argument>hdfs:///user/vinh.tran/triangleCounting/Theory-5-9-16-25-81-B2k.tsv</argument>
-		<argument>hdfs:///user/vinh.tran/pagerank/output</argument>
+		        <argument>hdfs:///user/vinh.tran/pagerank/output</argument>
                 <argument>45</argument>
             </arguments>
         </jar>
     </job>
-    <job name="SparkKMeans">
+    <job name="KMeans">
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">64</argument>
+                <argument name="executors">16</argument>
                 <argument name="class">org.apache.spark.examples.SparkKMeans</argument>
             </arguments>
         </runner>
@@ -50,11 +50,11 @@
             </arguments>
         </jar>
     </job>
-    <job name="JavaHdfsLR">
+    <job name="LogisticRegression">
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">64</argument>
+                <argument name="executors">16</argument>
                 <argument name="class">JavaHdfsLR</argument>
             </arguments>
         </runner>
@@ -70,7 +70,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">30</argument>
+                <argument name="executors">16</argument>
                 <argument name="class">de.tuberlin.cit.experiments.prediction.spark.LinearRegression</argument>
             </arguments>
         </runner>
@@ -78,7 +78,7 @@
             <path>/data/vinh.tran/new/jobData/runtime-prediction-spark-jobs-1.0-SNAPSHOT.jar</path>
             <arguments>
                 <argument>hdfs:///user/vinh.tran/linearRegression11/part-00000</argument>
-		<argument>100</argument>
+		        <argument>100</argument>
             </arguments>
         </jar>
     </job>
@@ -86,7 +86,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">64</argument>
+                <argument name="executors">16</argument>
                 <argument name="class">JavaSVMWithSGDExample</argument>
             </arguments>
         </runner>
@@ -98,11 +98,11 @@
             </arguments>
         </jar>
     </job>
-    <job name="TPCH8">
+    <job name="TPCH18">
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">64</argument>
+                <argument name="executors">16</argument>
                 <argument name="class">main.scala.TpchQuery</argument>
             </arguments>
         </runner>
@@ -117,7 +117,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">64</argument>
+                <argument name="executors">16</argument>
                 <argument name="class">Sort</argument>
             </arguments>
         </runner>
@@ -133,7 +133,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">64</argument>
+                <argument name="executors">16</argument>
                 <argument name="class">SortedWordCount</argument>
             </arguments>
         </runner>
@@ -200,7 +200,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">64</argument>
+                <argument name="executors">16</argument>
                 <argument name="class">de.tuberlin.cit.experiments.prediction.spark.ConnectedComponent</argument>
             </arguments>
         </runner>

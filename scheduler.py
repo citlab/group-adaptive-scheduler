@@ -94,7 +94,7 @@ class Scheduler(metaclass=ABCMeta):
     def place_containers(self, app: Application):
         pass
 
-    def _place_random(self, app: Application, n_containers=2):
+    def _place_random(self, app: Application, n_containers=4):
         nodes = self.cluster.non_full_nodes()
         good_nodes = [
             n for n in nodes

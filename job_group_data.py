@@ -1,10 +1,18 @@
 class JobGroupData:
-    group1 = ["SVM", "LogisticRegression"]
-    group2 = ["WordCount", "KMeans"]
-    group3 = ["TPCH21"]
-    groups = [group1, group2, group3]
+    group1 = ["WordCount", "KMeans", "LinearRegression"]
+    group2 = ["LogisticRegression", "SVM"]
+    group3 = ["SortedWordCount", "PageRank"]
+    group4 = ["TPCH18"]
+    group5 = ["Sort"]
+    group6 = ["ConnectedComponent"]
+    groups = [group1, group2, group3, group4, group5]
 
-    groupIndexes = {"SVM": 0, "LogisticRegression": 0, "WordCount": 1, "KMeans": 1, "TPCH21": 2}
+    groupIndexes = {"WordCount": 0, "KMeans": 0, "LinearRegression": 0,
+                    "LogisticRegression": 1, "SVM": 1,
+                    "SortedWordCount": 2, "PageRank": 2,
+                    "TPCH18": 3,
+                    "Sort": 4,
+                    "ConnectedComponent": 5}
 
     def get_group_name(self, group_index):
         return self.groups[group_index].__str__()
