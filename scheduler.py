@@ -269,6 +269,8 @@ class GroupAdaptive(RoundRobin):
             if best_group_to_schedule == -1:
                 print("No app is scheduling, pick randomly")
                 best_app = self.queue[np.random.randint(0, len(index))]
+                print("Choose randomly app {} to schedule".format(best_app.name))
+                return best_app, best_group_existing
             else:
                 # Pick app from the best group to schedule
                 for i in index:
