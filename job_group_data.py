@@ -5,7 +5,7 @@ class JobGroupData:
     group4 = ["TPCH18"]
     group5 = ["Sort"]
     group6 = ["ConnectedComponent"]
-    groups = [group1, group2, group3, group4, group5]
+    groups = [group1, group2, group3, group4, group5, group6]
 
     groupIndexes = {"WordCount": 0, "KMeans": 0, "LinearRegression": 0,
                     "LogisticRegression": 1, "SVM": 1,
