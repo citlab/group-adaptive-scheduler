@@ -81,7 +81,7 @@ parser_run.add_argument(
     nargs="?",
     help="scheduling strategy",
     default="RoundRobin",
-    choices=["RoundRobin", "Adaptive", "Random"]
+    choices=["RoundRobin", "Adaptive", "Random", "GroupAdaptive"]
 )
 
 parser_run.add_argument(
@@ -91,7 +91,7 @@ parser_run.add_argument(
     nargs="?",
     help="complementarity estimation strategy",
     default="Gradient",
-    choices=["EpsilonGreedy", "Gradient"]
+    choices=["EpsilonGreedy", "Gradient", "GroupGradient"]
 )
 
 parser_run.add_argument(
