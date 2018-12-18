@@ -109,6 +109,12 @@ class Cluster:
                 return True
         return False
 
+    def has_application_running(self):
+        for node in self.nodes.values():
+            if len(node.applications(is_running=True)) > 0:
+                return True
+        return False
+
     def remove_applications(self, application: Application):
         for node in self.nodes.values():
             node.remove_application(application)
