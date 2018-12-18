@@ -260,7 +260,7 @@ class SparkApplication(Application):
             "--deploy-mode cluster",
             "--num-executors {}".format(len(self.tasks)),
             "--name {}".format(self.name),
-            "--config spark.yarn.am.nodeLabelExpression=\"{}\"".format(self.cluster_slot)
+            "--conf spark.yarn.am.nodeLabelExpression=\"{}\"".format(self.cluster_slot)
             # "-ynm {}_{}".format(self.name, self.data_set),
             # "-yn {}".format(len(self.tasks)),
             # "-yD fix.container.hosts={tasks_host}".format(
