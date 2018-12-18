@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from sklearn.cross_validation import LeaveOneOut
+from sklearn.model_selection import LeaveOneOut
 from cluster import Cluster, Node
 from application import Application
 from complementarity import ComplementarityEstimation
