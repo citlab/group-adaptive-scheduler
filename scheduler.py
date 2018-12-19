@@ -221,7 +221,7 @@ class GroupAdaptive(RoundRobin):
         if existing_group == -1:
             print("No preferred group to schedule with, check if can schedule on slot 1")
             chosen_slot = JobGroupData.SLOT_1
-            if self.cluster.has_application_scheduled():
+            if self.cluster.has_application_running():
                 print("There are already job running, scheduling on slot 2")
                 chosen_slot = JobGroupData.SLOT_2
             app.cluster_slot = chosen_slot
