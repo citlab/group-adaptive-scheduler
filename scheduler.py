@@ -239,8 +239,8 @@ class GroupAdaptive(RoundRobin):
             if co_located_app is not None:
                 print("The chosen slot to place new job is {}".format(co_located_app.cluster_slot))
                 app.cluster_slot = co_located_app.cluster_slot
-                for node in self.cluster.nodes:
-                    if node.address in co_located_app.nodes():
+                for address, node in self.cluster.nodes.items():
+                    if address in co_located_app.nodes:
                         self._place(app, node, 4)
 
         # n_containers_scheduled = 0
@@ -267,7 +267,7 @@ class GroupAdaptive(RoundRobin):
 
             if best_group_to_schedule == -1:
                 print("No app is scheduling, pick randomly")
-                best_app = self.queue[np.random.randint(0, len(index))]
+                best_app = self.queue.pop(np.random.randint(0, len(index)))
                 print("Choose randomly app {} to schedule".format(best_app.name))
                 return best_app, best_group_existing
             else:
