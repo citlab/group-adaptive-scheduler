@@ -34,11 +34,14 @@ class Node(Server):
 
     def applications(self, by_name=False, is_running=False):
         apps = {}
+        #print("node {} has {} running containers".format(self.address, len(self.containers)))
 
         for container in self.containers:
+            #print("container.is_negligible = {} | container.application.is_running = {}".format(container.is_negligible, container.application.is_running))
             if not container.is_negligible and (container.application.is_running or not is_running):
                 key = getattr(container.application, 'name' if by_name else 'id')
                 apps[key] = container.application
+                #print("cluster.applications() found an scheduled app: {}".format(container.application.__str__()))
 
         return list(apps.values())
 
@@ -95,7 +98,7 @@ class Cluster:
         apps = {}
         for node in self.nodes.values():
             if node.available_containers() > 0 or with_full_nodes:
-                for app in node.applications(by_name=by_name, is_running=True):
+                for app in node.applications(by_name=by_name, is_running=False):
                     key = getattr(app, 'name' if by_name else 'id')
                     if key in apps:
                         apps[key][1] += 1

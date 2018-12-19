@@ -277,7 +277,7 @@ class GroupGradient(Gradient):
         return type(self).__name__
 
     def best_app_index(self, scheduled_apps, apps, scheduled_apps_weight=None):
-        if len(scheduled_apps) == 0:
+        if len(scheduled_apps) == 0 or len(scheduled_apps) == 2:
             return -1, -1
         probabilities = self.normalized_action_probabilities(scheduled_apps, apps, scheduled_apps_weight)
         selected_app_group = self.__choose(

@@ -57,6 +57,7 @@ class Scheduler(metaclass=ABCMeta):
                 print("No Application can be scheduled right now")
                 break
             app.start(self.cluster.resource_manager, self._on_app_finished)
+            #time.sleep(10)
         self.cluster.print_nodes()
 
     def schedule_application(self) -> Application:
@@ -106,7 +107,7 @@ class Scheduler(metaclass=ABCMeta):
         return self._place(app, node, n_containers)
 
     @staticmethod
-    def _place(app: Application, node: Node, n_containers=2):
+    def _place(app: Application, node: Node, n_containers=4):
         if n_containers <= 0:
             raise ValueError("Can not place {} containers".format(n_containers))
         # print("Place {} on {} ({})".format(app, node, node.available_containers()))
@@ -206,6 +207,8 @@ class GroupAdaptive(RoundRobin):
 
     def schedule_application(self) -> Application:
         print("GroupAdaptive-schedule_application()")
+        if self.cluster.available_containers()==0:
+            raise NoApplicationCanBeScheduled
         app, existing_group = self.get_application_to_schedule()
         if app.n_containers > self.cluster.available_containers():
             self.queue = [app] + self.queue
@@ -231,15 +234,19 @@ class GroupAdaptive(RoundRobin):
         else:
             print("The chosen existing group to co-locate is: {}".format(existing_group))
             co_located_app = None
-            for app in self.cluster.applications(with_full_nodes=False, by_name=True):
-                if JobGroupData.groupIndexes[app.name] == existing_group:
-                    print("Choose app {} of group {} to co-locate".format(app.name, existing_group))
-                    co_located_app = app
+            running_apps, running_apps_weight = self.cluster.applications(with_full_nodes=False, by_name=True)
+            #print(running_apps.__str__())
+            for running_app in running_apps:
+                if JobGroupData.groupIndexes[running_app.name] == existing_group:
+                    print("Choose app {} of group {} to co-locate".format(running_app.name, existing_group))
+                    co_located_app = running_app
                     break
             if co_located_app is not None:
                 print("The chosen slot to place new job is {}".format(co_located_app.cluster_slot))
                 app.cluster_slot = co_located_app.cluster_slot
                 for address, node in self.cluster.nodes.items():
+                    #print(co_located_app.nodes)
+                    #print(address)
                     if address in co_located_app.nodes:
                         self._place(app, node, 4)
 
@@ -273,7 +280,7 @@ class GroupAdaptive(RoundRobin):
             else:
                 # Pick app from the best group to schedule
                 for i in index:
-                    if JobGroupData.groupIndexes[self.queue[i]] == best_group_to_schedule:
+                    if JobGroupData.groupIndexes[self.queue[i].name] == best_group_to_schedule:
                         best_app = self.queue[i]
                         best_i = i
                         break
