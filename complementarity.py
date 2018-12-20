@@ -247,7 +247,7 @@ class GroupGradient(Gradient):
         for i, app in enumerate(sorted(recurrent_apps, key=lambda a: a.name)):
             index = JobGroupData.groupIndexes[app.name]
             self.index[app.name] = index
-            self.reverse_index[index] = JobGroupData.groups[index].__str__()
+            self.reverse_index[index] = JobGroupData.group_names[index]
 
         self.alpha = alpha
         self.average = np.full(self.shape[0], float(initial_average))
@@ -286,7 +286,7 @@ class GroupGradient(Gradient):
         )
         # Select which exist job group to co-located with new job
         selected_ongoing_job = np.argmax(self.preferences, axis=0)[selected_app_group]
-        print("-----------App group to schedule next = {}".format(selected_app_group))
+        #print("-----------App group to schedule next = {}".format(selected_app_group))
         print("-----------Ongoing group to schedule with = {}".format(selected_ongoing_job))
         print("-----------Preference matrix = {}".format(self.preferences[:,selected_app_group]))
         max_preference = -100
@@ -296,6 +296,8 @@ class GroupGradient(Gradient):
             if self.preferences[:,selected_app_group][index] > max_preference:
                 max_preference = self.preferences[:,selected_app_group][index]
                 selected_ongoing_job = index
+        print("-----------App group to schedule next = {}".format(selected_app_group))
+
         return selected_app_group, selected_ongoing_job
 
     def __action_probabilities(self, apps_index, concurrent_apps_index):
