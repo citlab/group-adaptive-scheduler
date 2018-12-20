@@ -255,22 +255,32 @@ class GroupGradient(Gradient):
         self.preferences = np.zeros(self.shape)
 
     def update_app(self, app, concurrent_apps, rate):
+        print("+++++++++++ Complementarity Update_app()")
+        print("+++++++++++ App to update: {}".format(str(app)))
+        print("+++++++++++ Concurrent apps with above app: {}".format(str(concurrent_apps)))
         app = self.indices(app)
         concurrent_apps = self.indices(concurrent_apps)
+        print("+++++++++++ Apps to update (indices): {}".format(str(app)))
+        print("+++++++++++ Concurrent apps with above app (indices): {}".format(str(concurrent_apps)))
 
         self.update_count[app] += 1
         self.average[app] += (rate - self.average[app]) / self.update_count[app]
 
         other_apps = np.delete(list(set(self.index.values())), concurrent_apps)
+        print("+++++++++++ Other apps: {}".format(str(other_apps)))
         ap_concurrent = self.__action_probabilities(app, concurrent_apps)
         ap_other = self.__action_probabilities(app, other_apps)
+        print("+++++++++++ ap_concurrent: {}".format(str(ap_concurrent)))
+        print("+++++++++++ ap_other: {}".format(str(ap_other)))
 
         constant = self.alpha * (rate - self.average[app])
 
         ix = np.ix_(app, concurrent_apps)
+        print("+++++++++++ ix (app, concurrent_apps): {}".format(str(ix)))
         self.preferences[ix] += constant * (1 - ap_concurrent)
 
         ix = np.ix_(app, other_apps)
+        print("+++++++++++ ix (app, other_apps): {}".format(str(ix)))
         self.preferences[ix] -= constant * ap_other
 
     def __str__(self):
