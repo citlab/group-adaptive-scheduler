@@ -286,6 +286,16 @@ class GroupGradient(Gradient):
         )
         # Select which exist job group to co-located with new job
         selected_ongoing_job = np.argmax(self.preferences, axis=0)[selected_app_group]
+        print("-----------App group to schedule next = {}".format(selected_app_group))
+        print("-----------Ongoing group to schedule with = {}".format(selected_ongoing_job))
+        print("-----------Preference matrix = {}".format(self.preferences[:,selected_app_group]))
+        max_preference = -100
+        selected_ongoing_job = -1
+        for app in scheduled_apps:
+            index = JobGroupData.groupIndexes[app.name]
+            if self.preferences[:,selected_app_group][index] > max_preference:
+                max_preference = self.preferences[:,selected_app_group][index]
+                selected_ongoing_job = index
         return selected_app_group, selected_ongoing_job
 
     def __action_probabilities(self, apps_index, concurrent_apps_index):
