@@ -57,7 +57,7 @@ class Scheduler(metaclass=ABCMeta):
                 print("No Application can be scheduled right now")
                 break
             app.start(self.cluster.resource_manager, self._on_app_finished)
-            #time.sleep(10)
+            time.sleep(1) # add a slight delay so jobs could be submitted to yarn in order
         self.cluster.print_nodes()
 
     def schedule_application(self) -> Application:
@@ -260,7 +260,9 @@ class GroupAdaptive(RoundRobin):
 
     def get_application_to_schedule(self):
         global best_i
-        scheduled_apps, scheduled_apps_weight = self.cluster.applications(by_name=True)
+        scheduled_apps, scheduled_apps_weight = self.cluster.applications(with_full_nodes=False, by_name=True)
+        #for app in scheduled_apps:
+        #    print(app.__str__())
         available_containers = self.cluster.available_containers()
         index = list(range(min(self.jobs_to_peek, len(self.queue))))
         best_app = None
