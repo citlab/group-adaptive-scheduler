@@ -255,32 +255,34 @@ class GroupGradient(Gradient):
         self.preferences = np.zeros(self.shape)
 
     def update_app(self, app, concurrent_apps, rate):
-        print("+++++++++++ Complementarity Update_app()")
-        print("+++++++++++ App to update: {}".format(str(app)))
-        print("+++++++++++ Concurrent apps with above app: {}".format(str(concurrent_apps)))
+        #print("+++++++++++ Complementarity Update_app()")
+        #print("+++++++++++ App to update: {}".format(str(app)))
+        #print("+++++++++++ Concurrent apps with above app: {}".format(str(concurrent_apps)))
         app = self.indices(app)
         concurrent_apps = self.indices(concurrent_apps)
-        print("+++++++++++ Apps to update (indices): {}".format(str(app)))
-        print("+++++++++++ Concurrent apps with above app (indices): {}".format(str(concurrent_apps)))
+        #print("+++++++++++ Apps to update (indices): {}".format(str(app)))
+        #print("+++++++++++ Concurrent apps with above app (indices): {}".format(str(concurrent_apps)))
 
         self.update_count[app] += 1
         self.average[app] += (rate - self.average[app]) / self.update_count[app]
 
         other_apps = np.delete(list(set(self.index.values())), concurrent_apps)
-        print("+++++++++++ Other apps: {}".format(str(other_apps)))
+        #print("+++++++++++ Other apps: {}".format(str(other_apps)))
         ap_concurrent = self.__action_probabilities(app, concurrent_apps)
         ap_other = self.__action_probabilities(app, other_apps)
-        print("+++++++++++ ap_concurrent: {}".format(str(ap_concurrent)))
-        print("+++++++++++ ap_other: {}".format(str(ap_other)))
+        #print("+++++++++++ ap_concurrent: {}".format(str(ap_concurrent)))
+        #print("+++++++++++ ap_other: {}".format(str(ap_other)))
 
         constant = self.alpha * (rate - self.average[app])
 
         ix = np.ix_(app, concurrent_apps)
-        print("+++++++++++ ix (app, concurrent_apps): {}".format(str(ix)))
+        #print("+++++++++++ ix (app, concurrent_apps): {}".format(str(ix)))
         self.preferences[ix] += constant * (1 - ap_concurrent)
+        np.set_printoptions(threshold=np.nan)
+        #print("+++++++++++ Preference matrix = {}".format(print(self.preferences)))
 
         ix = np.ix_(app, other_apps)
-        print("+++++++++++ ix (app, other_apps): {}".format(str(ix)))
+        #print("+++++++++++ ix (app, other_apps): {}".format(str(ix)))
         self.preferences[ix] -= constant * ap_other
 
     def __str__(self):
@@ -289,24 +291,28 @@ class GroupGradient(Gradient):
     def best_app_index(self, scheduled_apps, apps, scheduled_apps_weight=None):
         if len(scheduled_apps) == 0 or len(scheduled_apps) == 2:
             return -1, -1
+        print("- scheduled_apps: {}".format(",".join(app.name for app in scheduled_apps)))
+        print("- apps: {}".format(",".join(app.name for app in apps)))
         probabilities = self.normalized_action_probabilities(scheduled_apps, apps, scheduled_apps_weight)
-        selected_app_group = self.__choose(
+        print("- probabilities = {}".format(str(probabilities)))
+        selected_app_group_index = self.__choose(
             np.arange(len(probabilities)),
             probabilities
         )
+        selected_app_group = list(set(self.indices(apps)))[selected_app_group_index]
         # Select which exist job group to co-located with new job
         selected_ongoing_job = np.argmax(self.preferences, axis=0)[selected_app_group]
-        #print("-----------App group to schedule next = {}".format(selected_app_group))
-        print("-----------Ongoing group to schedule with = {}".format(selected_ongoing_job))
-        print("-----------Preference matrix = {}".format(self.preferences[:,selected_app_group]))
+        print("-----------App group to schedule next = {}".format(selected_app_group))
+        #print("-----------Ongoing group to schedule with = {}".format(selected_ongoing_job))
+        print("-----------Preference matrix = {}".format(self.preferences[JobGroupData.groupIndexes[scheduled_apps[0].name],:]))
         max_preference = -100
         selected_ongoing_job = -1
         for app in scheduled_apps:
             index = JobGroupData.groupIndexes[app.name]
-            if self.preferences[:,selected_app_group][index] > max_preference:
-                max_preference = self.preferences[:,selected_app_group][index]
+            if self.preferences[JobGroupData.groupIndexes[scheduled_apps[0].name],:][index] > max_preference:
+                max_preference = self.preferences[JobGroupData.groupIndexes[scheduled_apps[0].name],:][index]
                 selected_ongoing_job = index
-        print("-----------App group to schedule next = {}".format(selected_app_group))
+        print("-----------Ongoing job to schdule with = {}".format(selected_ongoing_job))
 
         return selected_app_group, selected_ongoing_job
 
@@ -316,6 +322,8 @@ class GroupGradient(Gradient):
         return (exp[:, concurrent_apps_index].T / exp.sum(axis=1)).T
 
     def normalized_action_probabilities(self, apps, apps_to_schedule, apps_weight=None):
+        print("- list(set(self.indices(apps))={}".format(str(list(set(self.indices(apps))))))
+        print("- list(set(self.indices(apps_to_schedule))={}".format(str(list(set(self.indices(apps_to_schedule))))))
         p = self.__action_probabilities(list(set(self.indices(apps))), list(set(self.indices(apps_to_schedule))))
         # if apps_weight is not None:
         #     p = (p.T * apps_weight).T
@@ -353,4 +361,6 @@ class GroupGradient(Gradient):
         for i, name in self.reverse_index.items():
             rows.append([name] + self.preferences[i].tolist())
 
-        print(tabulate(rows, headers, tablefmt='pipe'))
+        #print(tabulate(rows, headers, tablefmt='pipe'))
+        np.set_printoptions(threshold=np.nan)
+        print(self.preferences)
