@@ -13,9 +13,10 @@ class JobGroupData:
                     "TPCH18": 3,
                     "Sort": 4,
                     "ConnectedComponent": 5}
+    group_names = ["WC,KM,LiR", "LoR,SVM", "SWC,PR", "TPCH", "S", "CC"]
 
-    def get_group_name(self, group_index):
-        return self.groups[group_index].__str__()
+    def get_group_name(group_index):
+        return self.group_names[group_index]
 
     # Cluster slots
     SLOT_1 = "slot1"
