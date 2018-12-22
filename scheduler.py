@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from sklearn.model_selection import LeaveOneOut
+from sklearn.cross_validation import LeaveOneOut
 from cluster import Cluster, Node
 from application import Application
 from complementarity import ComplementarityEstimation
@@ -200,7 +200,7 @@ class Adaptive(RoundRobin):
 
 
 class GroupAdaptive(RoundRobin):
-    def __init__(self, jobs_to_peek=5, **kwargs):
+    def __init__(self, jobs_to_peek=10, **kwargs):
         super().__init__(**kwargs)
         self.jobs_to_peek = jobs_to_peek
         self.print_estimation = True
@@ -210,6 +210,7 @@ class GroupAdaptive(RoundRobin):
         if self.cluster.available_containers()==0:
             raise NoApplicationCanBeScheduled
         app, existing_group = self.get_application_to_schedule()
+        print("Marking self.get_app_to_schedule()")
         if app.n_containers > self.cluster.available_containers():
             self.queue = [app] + self.queue
             raise NoApplicationCanBeScheduled
@@ -281,22 +282,35 @@ class GroupAdaptive(RoundRobin):
                 return best_app, best_group_existing
             else:
                 # Pick app from the best group to schedule
+                print("Queue to consider: {}".format(",".join([self.queue[i].name for i in index])))
+                print("Best app group to schedule: {}".format(best_group_to_schedule))
+                print("Best app group existing: {}".format(best_group_existing))
+                print("Index = {}".format(index)) 
                 for i in index:
+                    print("Job {} index = {}".format(self.queue[i].name, JobGroupData.groupIndexes[self.queue[i].name]))
                     if JobGroupData.groupIndexes[self.queue[i].name] == best_group_to_schedule:
                         best_app = self.queue[i]
                         best_i = i
+                        #print("Best app group to schedule: {}".format(best_group_to_schedule))
+                        #print("Best app group existing: {}".format(best_group_existing))
+                        print("Best app is {} ({}) of queue {}".format(
+                            best_app.name,
+                            best_group_to_schedule,
+                            ",".join([self.queue[i].name for i in index])
+                        ))
+                        print("Best app n_containers = {} | available_containers = {}".format(best_app.n_containers, available_containers))
                         break
             if best_app is None:
-                return NoApplicationCanBeScheduled
+                raise NoApplicationCanBeScheduled
 
             if best_app.n_containers <= available_containers:
-                print("Best app group to schedule: {}".format(best_group_to_schedule))
-                print("Best app group existing: {}".format(best_group_existing))
-                print("Best app is {} ({}) of queue {}".format(
-                    best_app.name,
-                    best_group_to_schedule,
-                    ",".join([self.queue[i].name for i in index])
-                ))
+                #print("Best app group to schedule: {}".format(best_group_to_schedule))
+                #print("Best app group existing: {}".format(best_group_existing))
+                #print("Best app is {} ({}) of queue {}".format(
+                #    best_app.name,
+                #    best_group_to_schedule,
+                #    ",".join([self.queue[i].name for i in index])
+                #))
                 return self.queue.pop(best_i), best_group_existing
 
             index.pop(best_i)
