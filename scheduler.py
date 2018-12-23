@@ -285,21 +285,24 @@ class GroupAdaptive(RoundRobin):
                 print("Queue to consider: {}".format(",".join([self.queue[i].name for i in index])))
                 print("Best app group to schedule: {}".format(best_group_to_schedule))
                 print("Best app group existing: {}".format(best_group_existing))
-                print("Index = {}".format(index)) 
+                # print("Index = {}".format(index))
+                list_best_jobs_indexes = []
                 for i in index:
                     print("Job {} index = {}".format(self.queue[i].name, JobGroupData.groupIndexes[self.queue[i].name]))
                     if JobGroupData.groupIndexes[self.queue[i].name] == best_group_to_schedule:
-                        best_app = self.queue[i]
-                        best_i = i
-                        #print("Best app group to schedule: {}".format(best_group_to_schedule))
-                        #print("Best app group existing: {}".format(best_group_existing))
-                        print("Best app is {} ({}) of queue {}".format(
-                            best_app.name,
-                            best_group_to_schedule,
-                            ",".join([self.queue[i].name for i in index])
-                        ))
-                        print("Best app n_containers = {} | available_containers = {}".format(best_app.n_containers, available_containers))
-                        break
+                        print("Add job {} to list of best apps to choose from best group".format(self.queue[i].name))
+                        list_best_jobs_indexes.append(i)
+                best_i = list_best_jobs_indexes[np.random.randint(0, len(list_best_jobs_indexes))]
+                best_app = self.queue[best_i]
+                # print("Best app group to schedule: {}".format(best_group_to_schedule))
+                # print("Best app group existing: {}".format(best_group_existing))
+                print("Best app is {} ({}) of queue {}".format(
+                    best_app.name,
+                    best_group_to_schedule,
+                    ",".join([self.queue[i].name for i in index])
+                ))
+                #print("Best app n_containers = {} | available_containers = {}".format(best_app.n_containers,
+                #                                                                      available_containers))
             if best_app is None:
                 raise NoApplicationCanBeScheduled
 
