@@ -21,12 +21,37 @@ class JobGroupData:
     # Cluster slots
     SLOT_1 = "slot1"
     SLOT_2 = "slot2"
+    SLOT_FULL = "slot1|slot2"
 
-    cluster_slots_index = {"wally081.cit.tu-berlin.de": SLOT_1,
-                           "wally082.cit.tu-berlin.de": SLOT_1,
-                           "wally083.cit.tu-berlin.de": SLOT_1,
-                           "wally084.cit.tu-berlin.de": SLOT_1,
+    cluster_slots_index = {"wally060.cit.tu-berlin.de": SLOT_1,
+                           "wally061.cit.tu-berlin.de": SLOT_1,
+                           "wally062.cit.tu-berlin.de": SLOT_1,
+                           "wally063.cit.tu-berlin.de": SLOT_1,
+                           "wally064.cit.tu-berlin.de": SLOT_1,
+                           "wally065.cit.tu-berlin.de": SLOT_1,
+                           "wally066.cit.tu-berlin.de": SLOT_1,
+                           "wally067.cit.tu-berlin.de": SLOT_1,
+                           "wally068.cit.tu-berlin.de": SLOT_1,
+                           "wally069.cit.tu-berlin.de": SLOT_1,
+                           "wally071.cit.tu-berlin.de": SLOT_1,
+                           "wally072.cit.tu-berlin.de": SLOT_1,
+                           "wally073.cit.tu-berlin.de": SLOT_1,
+                           "wally075.cit.tu-berlin.de": SLOT_1,
+                           "wally076.cit.tu-berlin.de": SLOT_1,
+                           "wally077.cit.tu-berlin.de": SLOT_1,
+                           "wally078.cit.tu-berlin.de": SLOT_2,
+                           "wally079.cit.tu-berlin.de": SLOT_2,
+                           "wally081.cit.tu-berlin.de": SLOT_2,
+                           "wally082.cit.tu-berlin.de": SLOT_2,
+                           "wally083.cit.tu-berlin.de": SLOT_2,
+                           "wally084.cit.tu-berlin.de": SLOT_2,
                            "wally085.cit.tu-berlin.de": SLOT_2,
                            "wally086.cit.tu-berlin.de": SLOT_2,
                            "wally087.cit.tu-berlin.de": SLOT_2,
-                           "wally088.cit.tu-berlin.de": SLOT_2, }
+                           "wally088.cit.tu-berlin.de": SLOT_2,
+                           "wally089.cit.tu-berlin.de": SLOT_2,
+                           "wally090.cit.tu-berlin.de": SLOT_2,
+                           "wally091.cit.tu-berlin.de": SLOT_2,
+                           "wally092.cit.tu-berlin.de": SLOT_2,
+                           "wally093.cit.tu-berlin.de": SLOT_2,
+                           "wally094.cit.tu-berlin.de": SLOT_2, }
