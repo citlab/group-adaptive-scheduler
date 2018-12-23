@@ -4,6 +4,7 @@ import generator
 import scheduler
 import complementarity
 from application import Application
+from datetime import datetime
 
 
 def run(args):
@@ -17,6 +18,7 @@ def run(args):
         config_yaml=args.config_yaml
     )
     Application.print_command_line = args.pcmd
+    Application.experiment_name = "experiment_" + "%Y%m%d_%H%M%S".format(datetime.now()) + "_" + args.experiment_name
 
     if args.estimation_parameters is not None:
         s.estimation.load(args.estimation_parameters)
@@ -109,6 +111,15 @@ parser_run.add_argument(
     nargs="?",
     help="estimation data folder",
     default="estimation"
+)
+
+parser_run.add_argument(
+    "-em",
+    dest="experiment_name",
+    type=str,
+    nargs="?",
+    help="experiment name",
+    default="first_roundrobin"
 )
 
 parser_run.add_argument(
