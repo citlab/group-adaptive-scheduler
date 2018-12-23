@@ -98,7 +98,7 @@
             </arguments>
         </jar>
     </job>
-    <job name="TPCH18">
+    <job name="TPCH">
         <runner>
             <name>spark</name>
             <arguments>
