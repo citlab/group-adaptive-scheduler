@@ -103,13 +103,12 @@ class Application(Container):
         host_list = "|".join([address for address in self.nodes])
         export_file_name = self.id + "_" + self.name
 
-        cmd_query_cpu = "\nmkdir /data/vinh.tran/new/expData/{} && mkdir /data/vinh.tran/new/expData/{}/{}" \
+        cmd_query_cpu = "\nmkdir /data/vinh.tran/new/expData/{}/{}" \
                         "&& influx -precision rfc3339 -username root -password root" \
                         " -database 'telegraf' -host 'localhost' -execute 'SELECT usage_user,usage_iowait " \
                         "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                         "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/{}/cpu_{}.csv" \
             .format(self.experiment_name,
-                    self.experiment_name,
                     export_file_name,
                     self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
