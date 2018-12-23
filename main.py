@@ -3,6 +3,7 @@ import sys
 import generator
 import scheduler
 import complementarity
+import subprocess
 from application import Application
 from datetime import datetime
 
@@ -18,7 +19,9 @@ def run(args):
         config_yaml=args.config_yaml
     )
     Application.print_command_line = args.pcmd
-    Application.experiment_name = "experiment_" + "%Y%m%d_%H%M%S".format(datetime.now()) + "_" + args.experiment_name
+    Application.experiment_name = "experiment_" + datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + args.experiment_name
+    print("Experiment folder = {}".format(Application.experiment_name))
+    subprocess.Popen("mkdir /data/vinh.tran/new/expData/{}".format(Application.experiment_name), shell=True)
 
     if args.estimation_parameters is not None:
         s.estimation.load(args.estimation_parameters)
