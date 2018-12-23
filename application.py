@@ -51,7 +51,7 @@ class Application(Container):
         self.data_set = data_set
         self.nodes = set()
         self.group = JobGroupData.groupIndexes[name]
-        self.cluster_slot = JobGroupData.SLOT_1
+        self.cluster_slot = JobGroupData.SLOT_FULL
 
 
     @property
@@ -270,8 +270,8 @@ class SparkApplication(Application):
             "--master yarn",
             "--deploy-mode cluster",
             "--num-executors {}".format(len(self.tasks)),
-            "--name {}".format(self.name),
-            "--conf spark.yarn.executor.nodeLabelExpression=\"{}\"".format(self.cluster_slot)
+            "--name {}".format(self.name)
+            #"--conf spark.yarn.executor.nodeLabelExpression=\"{}\"".format(self.cluster_slot)
             # "-ynm {}_{}".format(self.name, self.data_set),
             # "-yn {}".format(len(self.tasks)),
             # "-yD fix.container.hosts={tasks_host}".format(
@@ -281,6 +281,9 @@ class SparkApplication(Application):
             #     am_host=self.node.address
             # )
         ]
+        if self.cluster_slot is not JobGroupData.SLOT_FULL:
+            cmd.append("--conf spark.yarn.executor.nodeLabelExpression=\"{}\"".format(self.cluster_slot))
+
         if self.tm is not None:
             cmd.append("-ytm {}".format(self.tm))
 
