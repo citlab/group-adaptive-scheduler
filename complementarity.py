@@ -16,6 +16,7 @@ class ComplementarityEstimation(metaclass=ABCMeta):
         self.apps = recurrent_apps
         self.index = {}
         self.reverse_index = {}
+        self.output_folder = "estimation"
         # Loop with auto index through list of
         for i, app in enumerate(sorted(recurrent_apps, key=lambda a: a.name)):
             self.index[app.name] = i

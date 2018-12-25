@@ -26,6 +26,9 @@ def run(args):
     if args.estimation_parameters is not None:
         s.estimation.load(args.estimation_parameters)
 
+    if args.estimation_folder is not None:
+        s.estimation.output_folder = args.estimation_folder
+
     s.start()
 
 
@@ -117,7 +120,7 @@ parser_run.add_argument(
 )
 
 parser_run.add_argument(
-    "-em",
+    "-en",
     dest="experiment_name",
     type=str,
     nargs="?",

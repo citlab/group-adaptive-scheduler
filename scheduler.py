@@ -1,3 +1,4 @@
+import subprocess
 from abc import ABCMeta, abstractmethod
 from sklearn.cross_validation import LeaveOneOut
 from cluster import Cluster, Node
@@ -83,7 +84,125 @@ class Scheduler(metaclass=ABCMeta):
     def on_stop(self):
         delta = self.stopped_at - self.started_at
         print("Queue took {:.0f}'{:.0f} to complete".format(delta // 60, delta % 60))
-        self.estimation.save('estimation')
+        self.estimation.save(self.estimation.output_folder)
+        self.export_experiment_data()
+
+    def export_experiment_data(self):
+        print("\n\n\n=======Generate experiment output=======\n\n\n")
+        host_list = "|".join([address for address in self.cluster.nodes.keys()])
+
+        cmd_query_cpu = "\ninflux -precision rfc3339 -username root -password root" \
+                        " -database 'telegraf' -host 'localhost' -execute 'SELECT usage_user,usage_iowait " \
+                        "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                        "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu_{}.csv" \
+            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    Application.experiment_name,
+                    Application.experiment_name)
+        print(cmd_query_cpu)
+        # subprocess.Popen(cmd_query_cpu, shell=True)
+
+        cmd_query_cpu_mean = "\ninflux -precision rfc3339 -username root -password root" \
+                             " -database 'telegraf' -host 'localhost' -execute 'SELECT mean(usage_user) as \"mean_cpu_percent\",mean(usage_iowait) as \"mean_io_wait\" " \
+                             "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                             "AND cpu = '\\''cpu-total'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu_{}_mean.csv" \
+            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    Application.experiment_name,
+                    Application.experiment_name)
+        print(cmd_query_cpu_mean)
+
+        cmd_query_mem = "\ninflux -precision rfc3339 -username root -password root " \
+                        "-database 'telegraf' -host 'localhost' -execute 'SELECT used_percent " \
+                        "FROM \"telegraf\".\"autogen\".\"mem\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                        "GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/mem_{}.csv" \
+            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    Application.experiment_name,
+                    Application.experiment_name)
+        print(cmd_query_mem)
+
+        cmd_query_mem_mean = "\ninflux -precision rfc3339 -username root -password root " \
+                             "-database 'telegraf' -host 'localhost' -execute 'SELECT mean(used_percent) " \
+                             "FROM \"telegraf\".\"autogen\".\"mem\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                             "GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/mem_{}_mean.csv" \
+            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    Application.experiment_name,
+                    Application.experiment_name)
+        print(cmd_query_mem_mean)
+
+        cmd_query_disk = "\ninflux -precision rfc3339 -username root -password root " \
+                         "-database 'telegraf' -host 'localhost' -execute 'SELECT sum(read_bytes),sum(write_bytes) " \
+                         "FROM (SELECT derivative(last(\"read_bytes\"),1s) as \"read_bytes\",derivative(last(\"write_bytes\"),1s) as \"write_bytes\",derivative(last(\"io_time\"),1s) as \"io_time\" " \
+                         "FROM \"telegraf\".\"autogen\".\"diskio\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                         "GROUP BY \"host\",\"name\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY host,time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/disk_{}.csv" \
+            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    Application.experiment_name,
+                    Application.experiment_name)
+        print(cmd_query_disk)
+
+        cmd_query_disk_mean = "\ninflux -precision rfc3339 -username root -password root " \
+                              "-database 'telegraf' -host 'localhost' -execute 'SELECT sum(read_bytes),sum(write_bytes) " \
+                              "FROM (SELECT derivative(last(\"read_bytes\"),1s) as \"read_bytes\",derivative(last(\"write_bytes\"),1s) as \"write_bytes\",derivative(last(\"io_time\"),1s) as \"io_time\" " \
+                              "FROM \"telegraf\".\"autogen\".\"diskio\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                              "GROUP BY \"host\",\"name\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/disk_{}_mean.csv" \
+            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    Application.experiment_name,
+                    Application.experiment_name)
+        print(cmd_query_disk_mean)
+
+        cmd_query_net = "\ninflux -precision rfc3339 -username root -password root " \
+                        "-database 'telegraf' -host 'localhost' -execute 'SELECT sum(download_bytes),sum(upload_bytes) FROM (SELECT  derivative(first(\"bytes_recv\"),1s) " \
+                        "as \"download_bytes\",derivative(first(\"bytes_sent\"),1s) as \"upload_bytes\"" \
+                        "FROM \"telegraf\".\"autogen\".\"net\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                        "GROUP BY \"host\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY host,time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/net_{}.csv" \
+            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    Application.experiment_name,
+                    Application.experiment_name)
+        print(cmd_query_net)
+
+        cmd_query_net_mean = "\ninflux -precision rfc3339 -username root -password root " \
+                             "-database 'telegraf' -host 'localhost' -execute 'SELECT sum(download_bytes),sum(upload_bytes) FROM (SELECT  derivative(first(\"bytes_recv\"),1s) " \
+                             "as \"download_bytes\",derivative(first(\"bytes_sent\"),1s) as \"upload_bytes\"" \
+                             "FROM \"telegraf\".\"autogen\".\"net\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                             "GROUP BY \"host\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/net_{}_mean.csv" \
+            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    Application.experiment_name,
+                    Application.experiment_name)
+        print(cmd_query_net_mean)
+
+        subprocess.Popen(
+            cmd_query_cpu + " && " + cmd_query_mem + " && " + cmd_query_disk + " && " + cmd_query_net + " && "
+            + cmd_query_cpu_mean + " && " + cmd_query_mem_mean + " && " + cmd_query_disk_mean + " && " + cmd_query_net_mean,
+            shell=True)
+
+        time.sleep(1)
+
+        with open("/data/vinh.tran/new/expData/{}/cmd.txt".format(Application.experiment_name), 'a') as file:
+            file.write("{}\n\n{}\n\n{}\n\n{}\n\n\n\n{}\n\n{}\n\n{}\n\n{}\n".
+                       format(cmd_query_cpu, cmd_query_mem, cmd_query_disk, cmd_query_net,
+                              cmd_query_cpu_mean, cmd_query_mem_mean, cmd_query_disk_mean, cmd_query_net_mean))
 
     def get_application_to_schedule(self) -> Application:
         app = self.queue[0]
@@ -200,7 +319,7 @@ class Adaptive(RoundRobin):
 
 
 class GroupAdaptive(RoundRobin):
-    def __init__(self, jobs_to_peek=10, **kwargs):
+    def __init__(self, jobs_to_peek=6, **kwargs):
         super().__init__(**kwargs)
         self.jobs_to_peek = jobs_to_peek
         self.print_estimation = True
