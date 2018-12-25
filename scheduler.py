@@ -95,8 +95,8 @@ class Scheduler(metaclass=ABCMeta):
                         " -database 'telegraf' -host 'localhost' -execute 'SELECT usage_user,usage_iowait " \
                         "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                         "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu_{}.csv" \
-            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            .format(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     host_list,
                     Application.experiment_name,
                     Application.experiment_name)
@@ -107,8 +107,8 @@ class Scheduler(metaclass=ABCMeta):
                              " -database 'telegraf' -host 'localhost' -execute 'SELECT mean(usage_user) as \"mean_cpu_percent\",mean(usage_iowait) as \"mean_io_wait\" " \
                              "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                              "AND cpu = '\\''cpu-total'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/cpu_{}_mean.csv" \
-            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            .format(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     host_list,
                     Application.experiment_name,
                     Application.experiment_name)
@@ -118,8 +118,8 @@ class Scheduler(metaclass=ABCMeta):
                         "-database 'telegraf' -host 'localhost' -execute 'SELECT used_percent " \
                         "FROM \"telegraf\".\"autogen\".\"mem\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                         "GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/mem_{}.csv" \
-            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            .format(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     host_list,
                     Application.experiment_name,
                     Application.experiment_name)
@@ -129,8 +129,8 @@ class Scheduler(metaclass=ABCMeta):
                              "-database 'telegraf' -host 'localhost' -execute 'SELECT mean(used_percent) " \
                              "FROM \"telegraf\".\"autogen\".\"mem\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                              "GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/mem_{}_mean.csv" \
-            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            .format(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     host_list,
                     Application.experiment_name,
                     Application.experiment_name)
@@ -141,11 +141,11 @@ class Scheduler(metaclass=ABCMeta):
                          "FROM (SELECT derivative(last(\"read_bytes\"),1s) as \"read_bytes\",derivative(last(\"write_bytes\"),1s) as \"write_bytes\",derivative(last(\"io_time\"),1s) as \"io_time\" " \
                          "FROM \"telegraf\".\"autogen\".\"diskio\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                          "GROUP BY \"host\",\"name\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY host,time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/disk_{}.csv" \
-            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            .format(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     host_list,
-                    self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     Application.experiment_name,
                     Application.experiment_name)
         print(cmd_query_disk)
@@ -155,11 +155,11 @@ class Scheduler(metaclass=ABCMeta):
                               "FROM (SELECT derivative(last(\"read_bytes\"),1s) as \"read_bytes\",derivative(last(\"write_bytes\"),1s) as \"write_bytes\",derivative(last(\"io_time\"),1s) as \"io_time\" " \
                               "FROM \"telegraf\".\"autogen\".\"diskio\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                               "GROUP BY \"host\",\"name\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/disk_{}_mean.csv" \
-            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            .format(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     host_list,
-                    self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     Application.experiment_name,
                     Application.experiment_name)
         print(cmd_query_disk_mean)
@@ -169,11 +169,11 @@ class Scheduler(metaclass=ABCMeta):
                         "as \"download_bytes\",derivative(first(\"bytes_sent\"),1s) as \"upload_bytes\"" \
                         "FROM \"telegraf\".\"autogen\".\"net\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                         "GROUP BY \"host\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY host,time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/net_{}.csv" \
-            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            .format(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     host_list,
-                    self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     Application.experiment_name,
                     Application.experiment_name)
         print(cmd_query_net)
@@ -183,11 +183,11 @@ class Scheduler(metaclass=ABCMeta):
                              "as \"download_bytes\",derivative(first(\"bytes_sent\"),1s) as \"upload_bytes\"" \
                              "FROM \"telegraf\".\"autogen\".\"net\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
                              "GROUP BY \"host\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/net_{}_mean.csv" \
-            .format(self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            .format(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     host_list,
-                    self.started_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    self.stopped_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.started_at)),
+                    time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(self.stopped_at)),
                     Application.experiment_name,
                     Application.experiment_name)
         print(cmd_query_net_mean)
