@@ -8,5 +8,33 @@
       <job name="Sort">0</job>
       <job name="TPCH">0</job>
       <job name="WordCount">0</job>
+      <job name="LinearRegression">0</job>
+      <job name="LogisticRegression">0</job>
+      <job name="SortedWordCount">0</job>
+      <job name="ConnectedComponent">0</job>
+      <job name="Sort">0</job>
+      <job name="TPCH">0</job>
+      <job name="WordCount">0</job>
+      <job name="LinearRegression">0</job>
+      <job name="LogisticRegression">0</job>
+      <job name="SortedWordCount">0</job>
+      <job name="ConnectedComponent">0</job>
+      <job name="Sort">0</job>
+      <job name="TPCH">0</job>
+      <job name="WordCount">0</job>
+      <job name="LinearRegression">0</job>
+      <job name="LogisticRegression">0</job>
+      <job name="SortedWordCount">0</job>
+      <job name="ConnectedComponent">0</job>
+      <job name="Sort">0</job>
+      <job name="TPCH">0</job>
+      <job name="WordCount">0</job>
+      <job name="LinearRegression">0</job>
+      <job name="LogisticRegression">0</job>
+      <job name="SortedWordCount">0</job>
+      <job name="ConnectedComponent">0</job>
+      <job name="Sort">0</job>
+      <job name="TPCH">0</job>
+      <job name="WordCount">0</job>
    </experiment>
 </suite>
