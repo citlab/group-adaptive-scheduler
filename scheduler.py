@@ -30,11 +30,11 @@ class Scheduler(metaclass=ABCMeta):
     def start(self):
         self.schedule()
         self._timer.start()
-        self.started_at = time.time()
+        self.started_at = time.time() - 3600
 
     def stop(self):
         self._timer.cancel()
-        self.stopped_at = time.time()
+        self.stopped_at = time.time() - 3600
 
     def update_estimation(self):
         for (apps, usage) in self.cluster.apps_usage():
