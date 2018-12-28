@@ -17,6 +17,9 @@ class NoApplicationCanBeScheduled(BaseException):
 
 
 class Scheduler(metaclass=ABCMeta):
+
+    jobs_to_peek_arg = 7
+
     def __init__(self, estimation: ComplementarityEstimation, cluster: Cluster, update_interval=60):
         self.queue = []
         self.estimation = estimation
@@ -321,7 +324,8 @@ class Adaptive(RoundRobin):
 class GroupAdaptive(RoundRobin):
     def __init__(self, jobs_to_peek=6, **kwargs):
         super().__init__(**kwargs)
-        self.jobs_to_peek = jobs_to_peek
+        self.jobs_to_peek = self.jobs_to_peek_arg
+        print("Init scheduler - set jobs_to_peek = {}".format(self.jobs_to_peek))
         self.print_estimation = True
 
     def schedule_application(self) -> Application:

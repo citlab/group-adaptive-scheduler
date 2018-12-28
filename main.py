@@ -5,6 +5,7 @@ import scheduler
 import complementarity
 import subprocess
 from application import Application
+from scheduler import Scheduler
 from datetime import datetime
 
 
@@ -22,6 +23,8 @@ def run(args):
     Application.experiment_name = "experiment_" + datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + args.experiment_name
     print("Experiment folder = {}".format(Application.experiment_name))
     subprocess.Popen("mkdir /data/vinh.tran/new/expData/{}".format(Application.experiment_name), shell=True)
+
+    Scheduler.jobs_to_peek_arg = args.jobs_to_peek
 
     if args.estimation_parameters is not None:
         s.estimation.load(args.estimation_parameters)
@@ -126,6 +129,15 @@ parser_run.add_argument(
     nargs="?",
     help="experiment name",
     default="first_roundrobin"
+)
+
+parser_gen.add_argument(
+    "-jtp",
+    dest="jobs_to_peek",
+    type=int,
+    nargs="?",
+    help="number of jobs for scheduler to peek",
+    default=7
 )
 
 parser_run.add_argument(
