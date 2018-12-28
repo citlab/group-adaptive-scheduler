@@ -300,7 +300,11 @@ class GroupGradient(Gradient):
             np.arange(len(probabilities)),
             probabilities
         )
-        selected_app_group = list(set(self.indices(apps)))[selected_app_group_index]
+        list_groups_to_scheduled = list(set(self.indices(apps)))
+        if len(list_groups_to_scheduled) > len(probabilities):
+            list_groups_to_scheduled.remove(JobGroupData.groupIndexes[scheduled_apps[0].name])
+        print("- list groups to considered: {}".format(str(list_groups_to_scheduled)))
+        selected_app_group = list_groups_to_scheduled[selected_app_group_index]
         # Select which exist job group to co-located with new job
         selected_ongoing_job = np.argmax(self.preferences, axis=0)[selected_app_group]
         print("-----------App group to schedule next = {}".format(selected_app_group))
@@ -323,9 +327,14 @@ class GroupGradient(Gradient):
         return (exp[:, concurrent_apps_index].T / exp.sum(axis=1)).T
 
     def normalized_action_probabilities(self, apps, apps_to_schedule, apps_weight=None):
-        print("- list(set(self.indices(apps))={}".format(str(list(set(self.indices(apps))))))
-        print("- list(set(self.indices(apps_to_schedule))={}".format(str(list(set(self.indices(apps_to_schedule))))))
-        p = self.__action_probabilities(list(set(self.indices(apps))), list(set(self.indices(apps_to_schedule))))
+        list_scheduled = list(set(self.indices(apps)))
+        list_to_schedule = list(set(self.indices(apps_to_schedule)))
+        list_to_schedule_excluded = [app for app in list_to_schedule if app not in list_scheduled]
+        if len(list_to_schedule_excluded) is not 0:
+            list_to_schedule = list_to_schedule_excluded
+        print("- list_scheduled={}".format(str(list_scheduled)))
+        print("- list_to_scheduled={}".format(str(list_to_schedule)))
+        p = self.__action_probabilities(list_scheduled, list_to_schedule)
         # if apps_weight is not None:
         #     p = (p.T * apps_weight).T
         p = p.sum(axis=0)
