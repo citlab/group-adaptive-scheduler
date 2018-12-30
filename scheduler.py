@@ -61,11 +61,12 @@ class Scheduler(metaclass=ABCMeta):
         while len(self.queue) > 0:
             try:
                 app = self.schedule_application()
-                app.waiting_time = app.waiting_time - 1
-                if self.waiting_time[app.waiting_time] is None:
-                    self.waiting_time[app.waiting_time] = 1
-                else:
+                if app.waiting_time != 0:
+                    app.waiting_time = app.waiting_time - 1
+                if app.waiting_time in self.waiting_time.keys():
                     self.waiting_time[app.waiting_time] = self.waiting_time[app.waiting_time] + 1
+                else:
+                    self.waiting_time[app.waiting_time] = 1
             except NoApplicationCanBeScheduled:
                 print("No Application can be scheduled right now")
                 break
