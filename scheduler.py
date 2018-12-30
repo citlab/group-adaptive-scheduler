@@ -29,6 +29,7 @@ class Scheduler(metaclass=ABCMeta):
         self.started_at = None
         self.stopped_at = None
         self.print_estimation = False
+        self.waiting_time = {}
 
     def start(self):
         self.schedule()
@@ -38,6 +39,9 @@ class Scheduler(metaclass=ABCMeta):
     def stop(self):
         self._timer.cancel()
         self.stopped_at = time.time() - 3600
+        print("\n\n\n((((((((((  Waiting times  ))))))))))\n\n\n")
+        for key, value in self.waiting_time:
+            print("{} rounds waiting - {}".format(key,value))
 
     def update_estimation(self):
         for (apps, usage) in self.cluster.apps_usage():
@@ -57,6 +61,11 @@ class Scheduler(metaclass=ABCMeta):
         while len(self.queue) > 0:
             try:
                 app = self.schedule_application()
+                app.waiting_time = app.waiting_time - 1
+                if self.waiting_time[app.waiting_time] is None:
+                    self.waiting_time[app.waiting_time] = 1
+                else:
+                    self.waiting_time[app.waiting_time] = self.waiting_time[app.waiting_time] + 1
             except NoApplicationCanBeScheduled:
                 print("No Application can be scheduled right now")
                 break
@@ -390,6 +399,11 @@ class GroupAdaptive(RoundRobin):
         available_containers = self.cluster.available_containers()
         index = list(range(min(self.jobs_to_peek, len(self.queue))))
         best_app = None
+        # Update waiting time for apps in considering queue
+        # first schedule round only count the last scheduled app out of 4
+        if available_containers < 9:
+            for i in index:
+                self.queue[i].waiting_time = self.queue[i].waiting_time + 1
 
         while len(index) > 0:
             best_group_to_schedule, best_group_existing = self.estimation.best_app_index(
