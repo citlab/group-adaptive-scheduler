@@ -30,6 +30,7 @@ class Scheduler(metaclass=ABCMeta):
         self.stopped_at = None
         self.print_estimation = False
         self.waiting_time = {}
+        self.scheduled_apps_num = 0
 
     def start(self):
         self.schedule()
@@ -39,9 +40,6 @@ class Scheduler(metaclass=ABCMeta):
     def stop(self):
         self._timer.cancel()
         self.stopped_at = time.time() - 3600
-        print("\n\n\n((((((((((  Waiting times  ))))))))))\n\n\n")
-        for key, value in self.waiting_time:
-            print("{} rounds waiting - {}".format(key,value))
 
     def update_estimation(self):
         for (apps, usage) in self.cluster.apps_usage():
@@ -71,6 +69,7 @@ class Scheduler(metaclass=ABCMeta):
                 print("No Application can be scheduled right now")
                 break
             app.start(self.cluster.resource_manager, self._on_app_finished)
+            self.scheduled_apps_num = self.scheduled_apps_num + 1
             time.sleep(1) # add a slight delay so jobs could be submitted to yarn in order
         self.cluster.print_nodes()
 
@@ -99,6 +98,10 @@ class Scheduler(metaclass=ABCMeta):
         print("Queue took {:.0f}'{:.0f} to complete".format(delta // 60, delta % 60))
         self.estimation.save(self.estimation.output_folder)
         self.export_experiment_data()
+        print("\n\n\n((((((((((  Waiting times  ))))))))))")
+        for (key, value) in self.waiting_time.items():
+            print("{} rounds waiting - {}".format(key,value))
+        print(str(self.waiting_time))
 
     def export_experiment_data(self):
         print("\n\n\n=======Generate experiment output=======\n\n\n")
@@ -402,7 +405,7 @@ class GroupAdaptive(RoundRobin):
         best_app = None
         # Update waiting time for apps in considering queue
         # first schedule round only count the last scheduled app out of 4
-        if available_containers < 9:
+        if self.scheduled_apps_num > 2:
             for i in index:
                 self.queue[i].waiting_time = self.queue[i].waiting_time + 1
 
