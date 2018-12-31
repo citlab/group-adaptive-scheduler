@@ -12,6 +12,7 @@ from datetime import datetime
 def run(args):
     scheduler_class = getattr(scheduler, args.scheduler)
     estimation_class = getattr(complementarity, args.estimation)
+    Scheduler.jobs_to_peek_arg = args.jobs_to_peek
     s = generator.scheduler(
         scheduler_class=scheduler_class,
         estimation_class=estimation_class,
@@ -24,7 +25,7 @@ def run(args):
     print("Experiment folder = {}".format(Application.experiment_name))
     subprocess.Popen("mkdir /data/vinh.tran/new/expData/{}".format(Application.experiment_name), shell=True)
 
-    Scheduler.jobs_to_peek_arg = args.jobs_to_peek
+    #Scheduler.jobs_to_peek_arg = args.jobs_to_peek
 
     if args.estimation_parameters is not None:
         s.estimation.load(args.estimation_parameters)
@@ -131,7 +132,7 @@ parser_run.add_argument(
     default="first_roundrobin"
 )
 
-parser_gen.add_argument(
+parser_run.add_argument(
     "-jtp",
     dest="jobs_to_peek",
     type=int,
