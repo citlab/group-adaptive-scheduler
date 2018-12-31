@@ -528,6 +528,9 @@ class GroupAdaptiveExtend(RoundRobin):
         total_waiting_time = 0
         for app in list_apps:
             total_waiting_time += app.waiting_time
+        if total_waiting_time is 0: # first scheduling case
+            total_waiting_time = 1 * len(list_apps)
+            return [(app.waiting_time + 1)/total_waiting_time for app in list_apps]
         return [app.waiting_time/total_waiting_time for app in list_apps]
 
     def get_application_to_schedule(self):
