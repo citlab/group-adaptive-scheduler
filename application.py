@@ -60,7 +60,10 @@ class Application(Container):
         return self
 
     def __str__(self):
-        return "{} ({}) [{}][waiting time = {}]".format(self.id, self.name, self.data_set, self.waiting_time)
+        return "{} ({}) [{}]".format(self.id, self.name, self.waiting_time)
+
+    def short_str(self):
+        return "{} [{}]".format(self.name, self.waiting_time)
 
     def start(self, resource_manager: ResourceManager, on_finish=None, sleep_during_loop=5):
         self.id = resource_manager.next_application_id()

@@ -93,7 +93,7 @@ parser_run.add_argument(
     nargs="?",
     help="scheduling strategy",
     default="RoundRobin",
-    choices=["RoundRobin", "Adaptive", "Random", "GroupAdaptive"]
+    choices=["RoundRobin", "Adaptive", "Random", "GroupAdaptive", "GroupAdaptiveExtend"]
 )
 
 parser_run.add_argument(
