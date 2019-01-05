@@ -1,0 +1,32 @@
+server:
+  disk_max: 900
+  net_max: 250
+  disk_name: disk
+  net_interface: net
+  containers: 8
+
+resource_manager:
+  type: Yarn
+  kwargs:
+    address: wally070
+
+#  type: DummyRM
+#  kwargs:
+#    n_nodes: 3
+#    n_containers: 4
+#    node_pattern: NN{}
+#    app_pattern: AA{}
+#    apps_running:
+#      test: yes
+#    apps_submitted: 2
+#    apps_finished:
+#      test: yes
+
+stat_collector:
+#  type: DummyStatCollector
+  type: InfluxDB
+  kwargs:
+    address: wally070
+
+cluster:
+  application_master: wally080.cit.tu-berlin.de
