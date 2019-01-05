@@ -3,6 +3,7 @@ server:
   net_max: 250
   disk_name: disk
   net_interface: net
+  containers: 4
 
 resource_manager:
   type: Yarn

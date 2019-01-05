@@ -5,9 +5,8 @@
       <job name="TPCH">0</job>
       <job name="KMeans">0</job>
       <job name="SVM">0</job>
-      <job name="Sort">0</job>
-      <job name="LogisticRegression">0</job>
       <job name="LinearRegression">0</job>
+      <job name="Sort">0</job>
       <job name="WordCount">0</job>
       <job name="PageRank">0</job>
    </experiment>

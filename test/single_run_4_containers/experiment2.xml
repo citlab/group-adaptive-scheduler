@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<suite>
+   <experiment name="simpleTest">
+      <job name="LogisticRegression">0</job>
+   </experiment>
+</suite>
