@@ -31,6 +31,9 @@ class Scheduler(metaclass=ABCMeta):
         self.print_estimation = False
         self.waiting_time = {}
         self.scheduled_apps_num = 0
+        self.jobs_to_peek = self.jobs_to_peek_arg
+        self.random_arrival_rate = [0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 1, 0, 2, 0, 2,
+                                    1, 0, 2, 2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0]
 
     def start(self):
         self.schedule()
@@ -69,6 +72,10 @@ class Scheduler(metaclass=ABCMeta):
                 print("No Application can be scheduled right now")
                 break
             app.start(self.cluster.resource_manager, self._on_app_finished)
+            if self.jobs_to_peek < len(self.queue):
+                self.jobs_to_peek = self.jobs_to_peek + self.random_arrival_rate[self.scheduled_apps_num]
+            print("Scheduler round: {}".format(self.scheduled_apps_num))
+            print("Jobs_to_peek = {}".format(self.jobs_to_peek))
             self.scheduled_apps_num = self.scheduled_apps_num + 1
             time.sleep(1) # add a slight delay so jobs could be submitted to yarn in order
         self.cluster.print_nodes()
@@ -473,8 +480,9 @@ class GroupAdaptiveExtend(RoundRobin):
     def __init__(self, jobs_to_peek=6, **kwargs):
         super().__init__(**kwargs)
         self.jobs_to_peek = self.jobs_to_peek_arg
-        self.waiting_limit = self.jobs_to_peek * 2
+        self.waiting_limit = self.jobs_to_peek_arg * 2
         print("Init scheduler - set jobs_to_peek = {}".format(self.jobs_to_peek))
+        print("Init scheduler - set waiting_limit = {}".format(self.waiting_limit))
         self.print_estimation = True
 
     def schedule_application(self) -> Application:
