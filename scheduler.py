@@ -74,6 +74,8 @@ class Scheduler(metaclass=ABCMeta):
         self.cluster.print_nodes()
 
     def schedule_application(self) -> Application:
+        if self.cluster.available_containers()==0:
+            raise NoApplicationCanBeScheduled
         app = self.get_application_to_schedule()
         if app.n_containers > self.cluster.available_containers():
             self.queue = [app] + self.queue
@@ -302,15 +304,20 @@ class RoundRobin(Scheduler):
 
 
 class Adaptive(RoundRobin):
-    def __init__(self, jobs_to_peek=5, **kwargs):
+    def __init__(self, jobs_to_peek=8, **kwargs):
         super().__init__(**kwargs)
-        self.jobs_to_peek = jobs_to_peek
+        self.jobs_to_peek = self.jobs_to_peek_arg
         self.print_estimation = True
 
     def get_application_to_schedule(self):
         scheduled_apps, scheduled_apps_weight = self.cluster.applications(by_name=True)
         available_containers = self.cluster.available_containers()
         index = list(range(min(self.jobs_to_peek, len(self.queue))))
+        # Update waiting time for apps in considering queue
+        # first schedule round only count the last scheduled app out of 4
+        if self.scheduled_apps_num > 2:
+            for i in index:
+                self.queue[i].waiting_time = self.queue[i].waiting_time + 1
 
         while len(index) > 0:
             best_i = self.estimation.best_app_index(
