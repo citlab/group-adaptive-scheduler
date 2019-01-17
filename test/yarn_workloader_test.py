@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 
 
 class Xml2Application:
-    expected_app = FlinkApplication(
+    expected_app = SparkApplication(
             name="tpch-1-full",
             n_task=159,
             jar="/home/test/tests/tpch/test.jar",
@@ -20,7 +20,7 @@ class Xml2Application:
     def test_xml_to_flink_application(self):
         with open('test/dummies/jobs.xml') as xml_file:
             xml = ET.parse(xml_file).getroot('jobs').find('job')
-            flink_app = xml_to_flink_application(xml)
+            flink_app = xml_to_spark_application(xml)
 
         assert self.expected_app.is_a_copy_of(flink_app)
 
@@ -28,7 +28,7 @@ class Xml2Application:
 class TestJobs:
     expected_apps = {
         "tpch-1-full": Xml2Application.expected_app,
-        "tpch-1": FlinkApplication(
+        "tpch-1": SparkApplication(
             name="tpch-1",
             n_task=70,
             jar="/home/test/tests/tpch/test.jar",

@@ -1,0 +1,6 @@
+WC,KM,LiR
+LoR,SVM
+SWC,PR
+TPCH
+S
+CC

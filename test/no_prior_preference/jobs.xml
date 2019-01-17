@@ -4,7 +4,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">16</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">de.tuberlin.cit.experiments.prediction.spark.SparkWC</argument>
             </arguments>
         </runner>
@@ -20,7 +20,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">16</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">de.tuberlin.cit.experiments.prediction.spark.GraphXPageRank</argument>
             </arguments>
         </runner>
@@ -37,7 +37,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">16</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">org.apache.spark.examples.SparkKMeans</argument>
             </arguments>
         </runner>
@@ -54,7 +54,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">16</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">JavaHdfsLR</argument>
             </arguments>
         </runner>
@@ -70,7 +70,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">16</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">de.tuberlin.cit.experiments.prediction.spark.LinearRegression</argument>
             </arguments>
         </runner>
@@ -86,7 +86,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">16</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">JavaSVMWithSGDExample</argument>
             </arguments>
         </runner>
@@ -102,7 +102,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">16</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">main.scala.TpchQuery</argument>
             </arguments>
         </runner>
@@ -117,7 +117,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">16</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">Sort</argument>
             </arguments>
         </runner>
@@ -133,7 +133,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">16</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">SortedWordCount</argument>
             </arguments>
         </runner>
@@ -151,7 +151,7 @@
         <runner>
             <name>spark</name>
             <arguments>
-                <argument name="executors">16</argument>
+                <argument name="executors">64</argument>
                 <argument name="class">de.tuberlin.cit.experiments.prediction.spark.ConnectedComponent</argument>
             </arguments>
         </runner>

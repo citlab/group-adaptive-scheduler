@@ -34,11 +34,14 @@ class Node(Server):
 
     def applications(self, by_name=False, is_running=False):
         apps = {}
+        #print("node {} has {} running containers".format(self.address, len(self.containers)))
 
         for container in self.containers:
+            #print("container.is_negligible = {} | container.application.is_running = {}".format(container.is_negligible, container.application.is_running))
             if not container.is_negligible and (container.application.is_running or not is_running):
                 key = getattr(container.application, 'name' if by_name else 'id')
                 apps[key] = container.application
+                #print("cluster.applications() found an scheduled app: {}".format(container.application.__str__()))
 
         return list(apps.values())
 
@@ -50,12 +53,15 @@ class Node(Server):
 
 
 class Cluster:
-    def __init__(self, resource_manager: ResourceManager, stat_collector: StatCollector, node_containers=None):
+    def __init__(self, resource_manager: ResourceManager, stat_collector: StatCollector, application_master, node_containers=None):
         self.resource_manager = resource_manager
         self.stat_collector = stat_collector
         self.nodes = {}
+        self.application_master = application_master
 
         for address, n_containers in self.resource_manager.nodes().items():
+            if address == self.application_master: # Don't place job on node running application master
+                continue
             self.nodes[address] = Node(address, n_containers if node_containers is None else node_containers)
 
     def apps_usage(self) -> List[Tuple[List[Application], Usage]]:
@@ -92,7 +98,7 @@ class Cluster:
         apps = {}
         for node in self.nodes.values():
             if node.available_containers() > 0 or with_full_nodes:
-                for app in node.applications(by_name=by_name, is_running=True):
+                for app in node.applications(by_name=by_name, is_running=False):
                     key = getattr(app, 'name' if by_name else 'id')
                     if key in apps:
                         apps[key][1] += 1
@@ -104,6 +110,11 @@ class Cluster:
         for node in self.nodes.values():
             if len(node.applications()) > 0:
                 return True
+        return False
+
+    def has_application_running(self):
+        if self.available_containers() < sum(n.n_containers for n in self.nodes.values()):
+            return True
         return False
 
     def remove_applications(self, application: Application):

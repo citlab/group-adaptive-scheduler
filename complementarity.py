@@ -7,6 +7,7 @@ import os
 import errno
 from pprint import pprint
 from tabulate import tabulate
+from job_group_data import JobGroupData
 
 
 class ComplementarityEstimation(metaclass=ABCMeta):
@@ -15,6 +16,8 @@ class ComplementarityEstimation(metaclass=ABCMeta):
         self.apps = recurrent_apps
         self.index = {}
         self.reverse_index = {}
+        self.output_folder = "estimation"
+        # Loop with auto index through list of
         for i, app in enumerate(sorted(recurrent_apps, key=lambda a: a.name)):
             self.index[app.name] = i
             self.reverse_index[i] = app.name
@@ -234,3 +237,140 @@ class Gradient(ComplementarityEstimation):
         print(tabulate(rows, headers, tablefmt='pipe'))
 
 
+class GroupGradient(Gradient):
+    def __init__(self, recurrent_apps: List[Application], alpha=0.01, initial_average=0):
+        super().__init__(recurrent_apps)
+        self.shape = (len(JobGroupData.groups), len(JobGroupData.groups))
+        self.apps = recurrent_apps
+        self.index = {}
+        self.reverse_index = {}
+        # Loop with auto index through list of
+        for i, app in enumerate(sorted(recurrent_apps, key=lambda a: a.name)):
+            index = JobGroupData.groupIndexes[app.name]
+            self.index[app.name] = index
+            self.reverse_index[index] = JobGroupData.group_names[index]
+
+        self.alpha = alpha
+        self.average = np.full(self.shape[0], float(initial_average))
+        self.update_count = np.full(self.shape[0], 0 if initial_average == 0 else 1, dtype=np.int64)
+        self.preferences = np.zeros(self.shape)
+
+    def update_app(self, app, concurrent_apps, rate):
+        #print("+++++++++++ Complementarity Update_app()")
+        #print("+++++++++++ App to update: {}".format(str(app)))
+        #print("+++++++++++ Concurrent apps with above app: {}".format(str(concurrent_apps)))
+        app = self.indices(app)
+        concurrent_apps = self.indices(concurrent_apps)
+        #print("+++++++++++ Apps to update (indices): {}".format(str(app)))
+        #print("+++++++++++ Concurrent apps with above app (indices): {}".format(str(concurrent_apps)))
+
+        self.update_count[app] += 1
+        self.average[app] += (rate - self.average[app]) / self.update_count[app]
+
+        other_apps = np.delete(list(set(self.index.values())), concurrent_apps)
+        #print("+++++++++++ Other apps: {}".format(str(other_apps)))
+        ap_concurrent = self.__action_probabilities(app, concurrent_apps)
+        ap_other = self.__action_probabilities(app, other_apps)
+        #print("+++++++++++ ap_concurrent: {}".format(str(ap_concurrent)))
+        #print("+++++++++++ ap_other: {}".format(str(ap_other)))
+
+        constant = self.alpha * (rate - self.average[app])
+
+        ix = np.ix_(app, concurrent_apps)
+        #print("+++++++++++ ix (app, concurrent_apps): {}".format(str(ix)))
+        self.preferences[ix] += constant * (1 - ap_concurrent)
+        np.set_printoptions(threshold=np.nan)
+        #print("+++++++++++ Preference matrix = {}".format(print(self.preferences)))
+
+        ix = np.ix_(app, other_apps)
+        #print("+++++++++++ ix (app, other_apps): {}".format(str(ix)))
+        self.preferences[ix] -= constant * ap_other
+
+    def __str__(self):
+        return type(self).__name__
+
+    def best_app_index(self, scheduled_apps, apps, scheduled_apps_weight=None):
+        if len(scheduled_apps) == 0 or len(scheduled_apps) == 2:
+            return -1, -1
+        print("- scheduled_apps: {}".format(",".join(app.name for app in scheduled_apps)))
+        print("- apps: {}".format(",".join(app.name for app in apps)))
+        probabilities = self.normalized_action_probabilities(scheduled_apps, apps, scheduled_apps_weight)
+        print("- probabilities = {}".format(str(probabilities)))
+        selected_app_group_index = self.__choose(
+            np.arange(len(probabilities)),
+            probabilities
+        )
+        list_groups_to_scheduled = list(set(self.indices(apps)))
+        if len(list_groups_to_scheduled) > len(probabilities):
+            list_groups_to_scheduled.remove(JobGroupData.groupIndexes[scheduled_apps[0].name])
+        print("- list groups to considered: {}".format(str(list_groups_to_scheduled)))
+        selected_app_group = list_groups_to_scheduled[selected_app_group_index]
+        # Select which exist job group to co-located with new job
+        selected_ongoing_job = np.argmax(self.preferences, axis=0)[selected_app_group]
+        print("-----------App group to schedule next = {}".format(selected_app_group))
+        #print("-----------Ongoing group to schedule with = {}".format(selected_ongoing_job))
+        print("-----------Preference matrix = {}".format(self.preferences[JobGroupData.groupIndexes[scheduled_apps[0].name],:]))
+        max_preference = -100
+        selected_ongoing_job = -1
+        for app in scheduled_apps:
+            index = JobGroupData.groupIndexes[app.name]
+            if self.preferences[JobGroupData.groupIndexes[scheduled_apps[0].name],:][index] > max_preference:
+                max_preference = self.preferences[JobGroupData.groupIndexes[scheduled_apps[0].name],:][index]
+                selected_ongoing_job = index
+        print("-----------Ongoing job to schdule with = {}".format(selected_ongoing_job))
+
+        return selected_app_group, selected_ongoing_job
+
+    def __action_probabilities(self, apps_index, concurrent_apps_index):
+        exp = np.exp(self.preferences[apps_index])
+
+        return (exp[:, concurrent_apps_index].T / exp.sum(axis=1)).T
+
+    def normalized_action_probabilities(self, apps, apps_to_schedule, apps_weight=None):
+        list_scheduled = list(set(self.indices(apps)))
+        list_to_schedule = list(set(self.indices(apps_to_schedule)))
+        list_to_schedule_excluded = [app for app in list_to_schedule if app not in list_scheduled]
+        if len(list_to_schedule_excluded) is not 0:
+            list_to_schedule = list_to_schedule_excluded
+        print("- list_scheduled={}".format(str(list_scheduled)))
+        print("- list_to_scheduled={}".format(str(list_to_schedule)))
+        p = self.__action_probabilities(list_scheduled, list_to_schedule)
+        # if apps_weight is not None:
+        #     p = (p.T * apps_weight).T
+        p = p.sum(axis=0)
+        return p / p.sum()
+
+    @staticmethod
+    def __choose(items, p):
+        indices = np.arange(len(items))
+        return items[np.random.choice(indices, p=p)]
+
+    def save(self, folder):
+        self._save(folder, "average", self.average)
+        self._save(folder, "preferences", self.preferences)
+        self._save(folder, "ucount", self.update_count)
+
+    def load(self, folder):
+        self.average = np.load("{}/average.npy".format(folder))
+        self.update_count = np.load("{}/ucount.npy".format(folder))
+        self.preferences = np.load("{}/preferences.npy".format(folder))
+
+    def print(self):
+        apps_name = list(self.reverse_index.values())
+        print(tabulate(
+            [
+                ["Average"] + self.average.tolist(),
+                ["Count"] + self.update_count.tolist(),
+            ],
+            apps_name,
+            tablefmt='pipe'
+        ))
+
+        rows = []
+        headers = ["Preferences"] + apps_name
+        for i, name in self.reverse_index.items():
+            rows.append([name] + self.preferences[i].tolist())
+
+        #print(tabulate(rows, headers, tablefmt='pipe'))
+        np.set_printoptions(threshold=np.nan)
+        print(self.preferences)

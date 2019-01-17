@@ -2,6 +2,8 @@ import subprocess
 import time
 from typing import List
 from threading import Thread
+
+from job_group_data import JobGroupData
 from resource_manager import ResourceManager
 from abc import ABCMeta, abstractmethod
 import uuid
@@ -33,6 +35,7 @@ class Container(metaclass=ABCMeta):
 
 class Application(Container):
     print_command_line = False
+    experiment_name = ""
 
     def __init__(self, name, n_tasks, data_set=''):
         super().__init__()
@@ -47,13 +50,20 @@ class Application(Container):
         self.containers = self.tasks
         self.data_set = data_set
         self.nodes = set()
+        self.group = JobGroupData.groupIndexes[name]
+        self.cluster_slot = JobGroupData.SLOT_FULL
+        self.waiting_time = 0
+
 
     @property
     def application(self):
         return self
 
     def __str__(self):
-        return "{} ({}) [{}]".format(self.id, self.name, self.data_set)
+        return "{} ({}) [{}]".format(self.id, self.name, self.waiting_time)
+
+    def short_str(self):
+        return "{} [{}]".format(self.name, self.waiting_time)
 
     def start(self, resource_manager: ResourceManager, on_finish=None, sleep_during_loop=5):
         self.id = resource_manager.next_application_id()
@@ -77,8 +87,8 @@ class Application(Container):
 
     def _run(self, resource_manager: ResourceManager, on_finish, sleep_during_loop):
         cmd = " ".join(self.command_line())
-        if self.print_command_line:
-            print("Start {} with cmd: {}".format(self.id, cmd))
+        #if self.print_command_line:
+        print("Start {} with cmd: {}".format(self.id, cmd))
         subprocess.Popen(cmd, shell=True)
 
         self.start_at = datetime.datetime.utcnow()
@@ -97,55 +107,127 @@ class Application(Container):
         host_list = "|".join([address for address in self.nodes])
         export_file_name = self.id + "_" + self.name
 
-        cmd_query_cpu = "mkdir /data/vinh.tran/expData/{} && influx -precision rfc3339 -username root -password root" \
+        cmd_query_cpu = "\nmkdir /data/vinh.tran/new/expData/{}/{}" \
+                        "&& influx -precision rfc3339 -username root -password root" \
                         " -database 'telegraf' -host 'localhost' -execute 'SELECT usage_user,usage_iowait " \
                         "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/expData/{}/cpu.csv" \
-            .format(export_file_name,
+                        "AND cpu = '\\''cpu-total'\\'' GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/{}/cpu_{}.csv" \
+            .format(self.experiment_name,
+                    export_file_name,
                     self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
-                    export_file_name)
+                    self.experiment_name,
+                    export_file_name,
+                    self.name)
         print(cmd_query_cpu)
         # subprocess.Popen(cmd_query_cpu, shell=True)
 
-        cmd_query_mem = "influx -precision rfc3339 -username root -password root " \
+        cmd_query_cpu_mean = "\ninflux -precision rfc3339 -username root -password root" \
+                        " -database 'telegraf' -host 'localhost' -execute 'SELECT mean(usage_user) as \"mean_cpu_percent\",mean(usage_iowait) as \"mean_io_wait\" " \
+                        "FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                        "AND cpu = '\\''cpu-total'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/{}/cpu_{}_mean.csv" \
+            .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    self.experiment_name,
+                    export_file_name,
+                    self.name)
+        print(cmd_query_cpu_mean)
+
+        cmd_query_mem = "\ninflux -precision rfc3339 -username root -password root " \
                         "-database 'telegraf' -host 'localhost' -execute 'SELECT used_percent " \
                         "FROM \"telegraf\".\"autogen\".\"mem\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "GROUP BY host' -format 'csv' > /data/vinh.tran/expData/{}/mem.csv" \
+                        "GROUP BY host' -format 'csv' > /data/vinh.tran/new/expData/{}/{}/mem_{}.csv" \
             .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
-                    export_file_name)
+                    self.experiment_name,
+                    export_file_name,
+                    self.name)
         print(cmd_query_mem)
 
-        cmd_query_disk = "influx -precision rfc3339 -username root -password root " \
-                        "-database 'telegraf' -host 'localhost' -execute 'SELECT derivative(last(\"io_time\"),1ms) " \
-                        "FROM \"telegraf\".\"autogen\".\"diskio\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                        "GROUP BY \"host\",\"name\",time(10s)' -format 'csv' > /data/vinh.tran/expData/{}/disk.csv" \
+        cmd_query_mem_mean = "\ninflux -precision rfc3339 -username root -password root " \
+                        "-database 'telegraf' -host 'localhost' -execute 'SELECT mean(used_percent) " \
+                        "FROM \"telegraf\".\"autogen\".\"mem\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                        "GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/{}/mem_{}_mean.csv" \
             .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
-                    export_file_name)
+                    self.experiment_name,
+                    export_file_name,
+                    self.name)
+        print(cmd_query_mem_mean)
+
+        cmd_query_disk = "\ninflux -precision rfc3339 -username root -password root " \
+                        "-database 'telegraf' -host 'localhost' -execute 'SELECT sum(read_bytes),sum(write_bytes) " \
+                        "FROM (SELECT derivative(last(\"read_bytes\"),1s) as \"read_bytes\",derivative(last(\"write_bytes\"),1s) as \"write_bytes\",derivative(last(\"io_time\"),1s) as \"io_time\" " \
+                        "FROM \"telegraf\".\"autogen\".\"diskio\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                        "GROUP BY \"host\",\"name\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY host,time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/{}/disk_{}.csv" \
+            .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.experiment_name,
+                    export_file_name,
+                    self.name)
         print(cmd_query_disk)
 
-        cmd_query_net = "influx -precision rfc3339 -username root -password root " \
-                         "-database 'telegraf' -host 'localhost' -execute 'SELECT  derivative(first(\"bytes_recv\"),1s) " \
-                         "as \"download bytes/sec\",derivative(first(\"bytes_sent\"),1s) as \"upload bytes/sec\"" \
-                         "FROM \"telegraf\".\"autogen\".\"net\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
-                         "GROUP BY \"host\",time(10s)' -format 'csv' > /data/vinh.tran/expData/{}/net.csv" \
+        cmd_query_disk_mean = "\ninflux -precision rfc3339 -username root -password root " \
+                         "-database 'telegraf' -host 'localhost' -execute 'SELECT sum(read_bytes),sum(write_bytes) " \
+                         "FROM (SELECT derivative(last(\"read_bytes\"),1s) as \"read_bytes\",derivative(last(\"write_bytes\"),1s) as \"write_bytes\",derivative(last(\"io_time\"),1s) as \"io_time\" " \
+                         "FROM \"telegraf\".\"autogen\".\"diskio\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                         "GROUP BY \"host\",\"name\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/{}/disk_{}_mean.csv" \
             .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     host_list,
-                    export_file_name)
+                    self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.experiment_name,
+                    export_file_name,
+                    self.name)
+        print(cmd_query_disk_mean)
+
+        cmd_query_net = "\ninflux -precision rfc3339 -username root -password root " \
+                         "-database 'telegraf' -host 'localhost' -execute 'SELECT sum(download_bytes),sum(upload_bytes) FROM (SELECT  derivative(first(\"bytes_recv\"),1s) " \
+                         "as \"download_bytes\",derivative(first(\"bytes_sent\"),1s) as \"upload_bytes\"" \
+                         "FROM \"telegraf\".\"autogen\".\"net\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                         "GROUP BY \"host\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY host,time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/{}/net_{}.csv" \
+            .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.experiment_name,
+                    export_file_name,
+                    self.name)
         print(cmd_query_net)
 
-        subprocess.Popen(cmd_query_cpu + " && " + cmd_query_mem + " && " + cmd_query_disk + " && " + cmd_query_net, shell=True)
+        cmd_query_net_mean = "\ninflux -precision rfc3339 -username root -password root " \
+                        "-database 'telegraf' -host 'localhost' -execute 'SELECT sum(download_bytes),sum(upload_bytes) FROM (SELECT  derivative(first(\"bytes_recv\"),1s) " \
+                        "as \"download_bytes\",derivative(first(\"bytes_sent\"),1s) as \"upload_bytes\"" \
+                        "FROM \"telegraf\".\"autogen\".\"net\" WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' AND host =~ /{}/  " \
+                        "GROUP BY \"host\",time(10s)) WHERE time > '\\''{}'\\'' and time < '\\''{}'\\'' GROUP BY time(10s)' -format 'csv' > /data/vinh.tran/new/expData/{}/{}/net_{}_mean.csv" \
+            .format(self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    host_list,
+                    self.start_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.end_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    self.experiment_name,
+                    export_file_name,
+                    self.name)
+        print(cmd_query_net_mean)
+
+        subprocess.Popen(cmd_query_cpu + " && " + cmd_query_mem + " && " + cmd_query_disk + " && " + cmd_query_net + " && "
+                         + cmd_query_cpu_mean + " && " + cmd_query_mem_mean + " && " + cmd_query_disk_mean + " && " + cmd_query_net_mean, shell=True)
 
         time.sleep(1)
 
-        with open('/data/vinh.tran/expData/{}/cmd.txt'.format(export_file_name), 'a') as file:
-            file.write("{}\n\n{}\n\n{}\n\n{}\n".format(cmd_query_cpu, cmd_query_mem, cmd_query_disk, cmd_query_net))
+        with open("/data/vinh.tran/new/expData/{}/{}/cmd_{}.txt".format(self.experiment_name, export_file_name, self.name), 'a') as file:
+            file.write("{}\n\n{}\n\n{}\n\n{}\n\n\n\n{}\n\n{}\n\n{}\n\n{}\n".
+                       format(cmd_query_cpu, cmd_query_mem, cmd_query_disk, cmd_query_net,
+                              cmd_query_cpu_mean, cmd_query_mem_mean, cmd_query_disk_mean, cmd_query_net_mean))
 
         if callable(on_finish):
             on_finish(self)
@@ -178,7 +260,7 @@ class DummyApplication(Application):
         return ["sleep", "0.1"]
 
 
-class FlinkApplication(Application):
+class SparkApplication(Application):
     def __init__(self, name, n_task, jar, args, jar_class=None, tm=None, **kwargs):
         super().__init__(name, n_task, **kwargs)
         self.jar = jar
@@ -188,23 +270,29 @@ class FlinkApplication(Application):
 
     def command_line(self):
         cmd = [
-            "$FLINK_HOME/bin/flink",
-            "run",
-            "-m yarn-cluster",
-            "-ynm {}_{}".format(self.name, self.data_set),
-            "-yn {}".format(len(self.tasks)),
-            "-yD fix.container.hosts={tasks_host}".format(
-                tasks_host=",".join(self.tasks_hosts()),
-            ),
+            "$SPARK_HOME/bin/spark-submit",
+            "--master yarn",
+            "--deploy-mode cluster",
+            "--num-executors {}".format(len(self.tasks)),
+            "--name {}".format(self.name)
+            #"--conf spark.yarn.executor.nodeLabelExpression=\"{}\"".format(self.cluster_slot)
+            # "-ynm {}_{}".format(self.name, self.data_set),
+            # "-yn {}".format(len(self.tasks)),
+            # "-yD fix.container.hosts={tasks_host}".format(
+            #     tasks_host=",".join(self.tasks_hosts()),
+            # ),
             # "-yDfix.am.host={am_host}".format(
             #     am_host=self.node.address
             # )
         ]
+        if self.cluster_slot is not JobGroupData.SLOT_FULL:
+            cmd.append("--conf spark.yarn.executor.nodeLabelExpression=\"{}\"".format(self.cluster_slot))
+
         if self.tm is not None:
             cmd.append("-ytm {}".format(self.tm))
 
         if self.jar_class is not None:
-            cmd.append("-c {}".format(self.jar_class))
+            cmd.append("--class {}".format(self.jar_class))
 
         cmd.append(self.jar)
 
@@ -216,7 +304,7 @@ class FlinkApplication(Application):
             else:
                 cmd.append(arg)
 
-        cmd.append("1> apps_log/{}.log".format(self.id))
+        cmd.append("1> apps_log/{}.log".format(self.id + "_" + self.name))
 
         return cmd
 
@@ -228,7 +316,7 @@ class FlinkApplication(Application):
         return hosts
 
     def copy(self):
-        return FlinkApplication(
+        return SparkApplication(
             self.name,
             len(self.tasks),
             self.jar,

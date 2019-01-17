@@ -87,7 +87,7 @@ class Yarn(YarnResourceManager, ResourceManager):
         try:
             app_data = self.cluster_application(application_id).data
             output = app_data['app']['state'] == "FINISHED"
-            print("Check status of application with ID =  {} : {}".format(application_id, app_data['app']['state']))
+            #print("Check status of application with ID =  {} : {}".format(application_id, app_data['app']['state']))
 
         except BaseException as e:
             print(e)

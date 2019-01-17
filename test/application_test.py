@@ -60,7 +60,7 @@ class TestApplication:
 class TestFlinkApplication:
     @staticmethod
     def gen_app():
-        app = FlinkApplication("app", 8, "jar", ["arg1", "TEMP"], tm=1536, jar_class="JarClassK")
+        app = SparkApplication("app", 8, "jar", ["arg1", "TEMP"], tm=1536, jar_class="JarClassK")
         app.id = "flink"
 
         nodes = []
@@ -104,17 +104,17 @@ class TestFlinkApplication:
         assert expected_cmd[11] in cmd[11]
 
     def test_is_a_copy_of(self):
-        app = FlinkApplication("app", 8, jar="jar", args=["arg1"])
-        app1 = FlinkApplication("app", 8, jar="jar", args=["arg1"])
-        app2 = FlinkApplication("app", 8, jar="jar2", args=["arg1"])
-        app3 = FlinkApplication("app", 8, jar="jar", args=["arg3"])
+        app = SparkApplication("app", 8, jar="jar", args=["arg1"])
+        app1 = SparkApplication("app", 8, jar="jar", args=["arg1"])
+        app2 = SparkApplication("app", 8, jar="jar2", args=["arg1"])
+        app3 = SparkApplication("app", 8, jar="jar", args=["arg3"])
 
         assert app1.is_a_copy_of(app)
         assert not app2.is_a_copy_of(app)
         assert not app3.is_a_copy_of(app)
 
     def test_copy(self):
-        app = FlinkApplication("app", 8, jar="jar", args=["arg1"])
+        app = SparkApplication("app", 8, jar="jar", args=["arg1"])
         c_app = app.copy()
 
         assert c_app.is_a_copy_of(app)
