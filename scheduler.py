@@ -19,6 +19,8 @@ class NoApplicationCanBeScheduled(BaseException):
 class Scheduler(metaclass=ABCMeta):
 
     jobs_to_peek_arg = 7
+    activate_random_arrival = False
+    waiting_limit = -1
 
     def __init__(self, estimation: ComplementarityEstimation, cluster: Cluster, update_interval=60):
         self.queue = []
@@ -72,7 +74,8 @@ class Scheduler(metaclass=ABCMeta):
                 print("No Application can be scheduled right now")
                 break
             app.start(self.cluster.resource_manager, self._on_app_finished)
-            if self.jobs_to_peek < len(self.queue):
+            if self.jobs_to_peek < len(self.queue) and self.activate_random_arrival:
+                print("Update random arrival rate")
                 self.jobs_to_peek = self.jobs_to_peek + self.random_arrival_rate[self.scheduled_apps_num]
             print("Scheduler round: {}".format(self.scheduled_apps_num))
             print("Jobs_to_peek = {}".format(self.jobs_to_peek))
@@ -480,9 +483,11 @@ class GroupAdaptiveExtend(RoundRobin):
     def __init__(self, jobs_to_peek=6, **kwargs):
         super().__init__(**kwargs)
         self.jobs_to_peek = self.jobs_to_peek_arg
-        self.waiting_limit = self.jobs_to_peek_arg * 2
+        if self.waiting_limit is -1:
+            self.waiting_limit = self.jobs_to_peek_arg * 2
         print("Init scheduler - set jobs_to_peek = {}".format(self.jobs_to_peek))
         print("Init scheduler - set waiting_limit = {}".format(self.waiting_limit))
+        print("Init scheduler - activate random arrival rate = {}".format(self.activate_random_arrival))
         self.print_estimation = True
 
     def schedule_application(self) -> Application:

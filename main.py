@@ -13,6 +13,8 @@ def run(args):
     scheduler_class = getattr(scheduler, args.scheduler)
     estimation_class = getattr(complementarity, args.estimation)
     Scheduler.jobs_to_peek_arg = args.jobs_to_peek
+    Scheduler.waiting_limit = args.waiting_limit
+    Scheduler.activate_random_arrival = args.random_rate
     s = generator.scheduler(
         scheduler_class=scheduler_class,
         estimation_class=estimation_class,
@@ -139,6 +141,24 @@ parser_run.add_argument(
     nargs="?",
     help="number of jobs for scheduler to peek",
     default=7
+)
+
+parser_run.add_argument(
+    "-wl",
+    dest="waiting_limit",
+    type=int,
+    nargs="?",
+    help="waiting limit before set job as late job",
+    default=-1
+)
+
+parser_run.add_argument(
+    "-rr",
+    dest="random_rate",
+    type=bool,
+    nargs="?",
+    help="Decide whether to use random rate",
+    default=False
 )
 
 parser_run.add_argument(
